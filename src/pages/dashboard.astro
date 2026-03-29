@@ -42,7 +42,7 @@ import Layout from "../layouts/Layout.astro";
 				</div>
 				<button
 					id="logout-btn"
-					class="px-6 py-2.5 rounded-full text-xs font-bold bg-bg hover:bg-accent text-slate-500 transition-all border-2 border-transparent hover:border-primary/20 shrink-0 uppercase tracking-widest"
+					class="px-6 py-2.5 rounded-full text-xs font-bold bg-bg hover:bg-accent text-muted transition-all border-2 border-border/30 hover:border-primary/20 shrink-0 uppercase tracking-widest"
 				>
 					Descansar (Salir)
 				</button>
@@ -104,14 +104,14 @@ import Layout from "../layouts/Layout.astro";
 
 	<dialog
 		id="new-project-modal"
-		class="bg-white border-4 border-primary/20 rounded-[2.5rem] shadow-2xl p-0 backdrop:backdrop-blur-sm w-[90%] max-w-md m-auto overflow-hidden"
+		class="bg-white border-4 border-border/20 rounded-[2.5rem] shadow-2xl p-0 backdrop:backdrop-blur-sm w-[90%] max-w-md m-auto overflow-hidden"
 	>
 		<div class="p-10">
-			<h3 class="text-2xl font-black text-text italic mb-2">
-				Nuevo Retrato
+			<h3 class="text-2xl font-black text-heading italic mb-2">
+				Nuevo Proyecto
 			</h3>
-			<p class="text-sm text-slate-400 mb-8 italic">
-				¿Cómo se llamará esta nueva criatura?
+			<p class="text-sm text-muted mb-8 italic">
+				¿Cómo se llamará este nuevo proyecto?
 			</p>
 
 			<input
@@ -124,7 +124,7 @@ import Layout from "../layouts/Layout.astro";
 			<div class="flex gap-4">
 				<button
 					id="cancel-project-btn"
-					class="flex-1 py-4 text-xs font-bold uppercase tracking-widest text-slate-400 hover:text-text transition-colors"
+					class="flex-1 py-4 text-xs font-bold uppercase tracking-widest text-muted hover:text-text transition-colors"
 					>Atrás</button
 				>
 				<button
@@ -132,6 +132,43 @@ import Layout from "../layouts/Layout.astro";
 					class="flex-2 py-4 bg-primary text-white rounded-full font-bold shadow-lg hover:scale-105 transition-all"
 					>Crear</button
 				>
+			</div>
+		</div>
+	</dialog>
+
+	<!-- Modal de Confirmación de Borrado -->
+	<dialog
+		id="delete-confirm-modal"
+		class="bg-white border-4 border-peach/30 rounded-[2.5rem] shadow-2xl p-0 backdrop:backdrop-blur-sm w-[90%] max-w-sm m-auto overflow-hidden"
+	>
+		<div class="p-10 text-center">
+			<div class="text-4xl mb-4">🍂</div>
+			<h3 class="text-xl font-black text-heading italic mb-2">
+				¿Seguro de borrarlo?
+			</h3>
+			<p
+				id="delete-project-name"
+				class="text-sm text-primary font-bold mb-6 italic uppercase tracking-widest"
+			>
+			</p>
+			<p class="text-[11px] text-muted mb-8 leading-relaxed">
+				Esta acción limpiará todos los archivos de la nube y no se puede
+				deshacer.
+			</p>
+
+			<div class="flex flex-col gap-2">
+				<button
+					id="confirm-delete-btn"
+					class="w-full py-4 bg-red-400 text-white rounded-full font-bold shadow-lg hover:bg-red-500 transition-all"
+				>
+					Sí, borrar para siempre
+				</button>
+				<button
+					id="cancel-delete-btn"
+					class="w-full py-4 text-xs font-bold uppercase tracking-widest text-muted hover:text-text transition-colors"
+				>
+					Mejor no
+				</button>
 			</div>
 		</div>
 	</dialog>
@@ -173,6 +210,47 @@ import Layout from "../layouts/Layout.astro";
 		if (loading) loading.classList.add("hidden");
 		if (content) content.classList.remove("hidden");
 
+		const deleteModal = document.getElementById(
+			"delete-confirm-modal",
+		) as HTMLDialogElement;
+		const deleteConfirmBtn = document.getElementById(
+			"confirm-delete-btn",
+		) as HTMLButtonElement;
+		const deleteCancelBtn = document.getElementById("cancel-delete-btn");
+		const deleteProjectNameSpan = document.getElementById(
+			"delete-project-name",
+		);
+
+		let projectToDelete: { id: string; btn: HTMLElement } | null = null;
+
+		// Cerrar modal de borrado
+		deleteCancelBtn?.addEventListener("click", () => deleteModal.close());
+
+		// Acción definitiva de borrado
+		deleteConfirmBtn?.addEventListener("click", async () => {
+			if (!projectToDelete) return;
+
+			const { id, btn } = projectToDelete;
+			deleteModal.close(); // Cerramos el modal inmediatamente
+
+			window.showToast("Limpiando proyecto...", "info");
+			btn.innerHTML =
+				'<div class="w-4 h-4 border-2 border-red-500 border-t-transparent rounded-full animate-spin"></div>';
+
+			const res = await fetch("/api/delete-project", {
+				method: "POST",
+				body: JSON.stringify({ projectId: id }),
+				headers: { "Content-Type": "application/json" },
+			});
+
+			if (res.ok) {
+				window.showToast("Proyecto eliminado", "success");
+			} else {
+				window.showToast("Error al borrar", "error");
+			}
+			loadProjects(); // Refrescamos la lista
+		});
+
 		// Rutina para cargar los proyectos desde Supabase
 		const loadProjects = async () => {
 			if (projectsSkeleton) projectsSkeleton.classList.remove("hidden");
@@ -206,56 +284,43 @@ import Layout from "../layouts/Layout.astro";
 
 					const card = document.createElement("div");
 					card.className =
-						"group relative bg-slate-900/40 p-5 rounded-3xl border border-accent/40 hover:border-primary/50 transition-all flex flex-col justify-between min-h-[180px]";
-
+						"group relative bg-white p-6 rounded-[2rem] border-2 border-border/40 hover:border-primary/60 shadow-sm hover:shadow-xl transition-all ...";
 					card.innerHTML = `
-                <button class="delete-project-btn absolute top-5 right-5 p-2.5 text-slate-500 hover:text-red-500 hover:bg-red-500/10 rounded-xl opacity-0 group-hover:opacity-100 transition-all" data-id="${proj.id}" data-name="${proj.project_name}">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18m-2 0v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6m3 0V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"></path></svg>
-                </button>
-                <div>
-                    <h3 class="text-lg font-black text-white group-hover:text-primary transition-colors pr-10 italic uppercase">${proj.project_name}</h3>
-                    <p class="text-[10px] font-bold text-slate-500 mt-2 uppercase tracking-widest">${date}</p>
-                </div>
-                <div class="mt-6">
-                    <a href="/editor/${proj.id}" class="w-full inline-flex items-center justify-center py-3 px-4 rounded-xl bg-white/5 border border-white/10 text-sm font-bold text-secondary hover:bg-primary hover:text-white transition-all">
-                        ABRIR EDITOR
-                    </a>
-                </div>
-            `;
+						<button class="delete-project-btn absolute top-5 right-5 p-2 text-muted hover:text-red-400 hover:bg-red-50 rounded-full opacity-0 group-hover:opacity-100 transition-all border border-transparent hover:border-red-100" data-id="${proj.id}" data-name="${proj.project_name}">
+							<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18m-2 0v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6m3 0V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"></path></svg>
+						</button>
+						
+						<div>
+							<h3 class="text-lg font-black text-heading group-hover:text-primary transition-colors pr-10 italic uppercase leading-tight">
+								${proj.project_name || "Sin Título"}
+							</h3>
+							<p class="text-[10px] font-bold text-muted mt-2 uppercase tracking-widest italic">
+								Creado: ${date}
+							</p>
+						</div>
+
+						<div class="mt-6">
+							<a href="/editor/${proj.id}" class="w-full inline-flex items-center justify-center py-3 px-4 rounded-full bg-bg border-2 border-border/50 text-xs font-black uppercase tracking-widest text-heading hover:bg-primary hover:text-white hover:border-primary transition-all shadow-sm">
+								Abrir Editor
+							</a>
+						</div>
+					`;
 
 					// Listener de borrado para cada tarjeta
 					card.querySelector(".delete-project-btn")?.addEventListener(
 						"click",
-						async (e) => {
+						(e) => {
 							const btn = e.currentTarget as HTMLElement;
 							const { id, name } = btn.dataset;
 
-							if (
-								!confirm(
-									`¿Eliminar "${name}"? Se borrarán todos los assets de Cloudinary.`,
-								)
-							)
-								return;
-
-							window.showToast("Limpiando proyecto...", "info");
-							btn.innerHTML =
-								'<div class="w-4 h-4 border-2 border-red-500 border-t-transparent rounded-full animate-spin"></div>';
-
-							const res = await fetch("/api/delete-project", {
-								method: "POST",
-								body: JSON.stringify({ projectId: id }),
-								headers: { "Content-Type": "application/json" },
-							});
-
-							if (res.ok) {
-								window.showToast(
-									"Proyecto eliminado",
-									"success",
-								);
-								loadProjects(); // Recarga la lista sin refrescar la página
-							} else {
-								window.showToast("Error al borrar", "error");
-								loadProjects();
+							if (id && name) {
+								// Guardamos la referencia de qué queremos borrar
+								projectToDelete = { id, btn };
+								// Ponemos el nombre en el modal
+								if (deleteProjectNameSpan)
+									deleteProjectNameSpan.textContent = name;
+								// ¡Abrimos el dialog bonito!
+								deleteModal.showModal();
 							}
 						},
 					);

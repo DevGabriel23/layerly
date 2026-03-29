@@ -52,13 +52,17 @@ export const Theme = {
 
 	<div
 		id="snackbar"
-		class="fixed bottom-8 left-1/2 -translate-x-1/2 z-100 flex items-center gap-3 px-6 py-4 bg-slate-900/90 border border-white/10 backdrop-blur-xl rounded-2xl shadow-2xl transition-all duration-500 translate-y-20 opacity-0 pointer-events-none"
+		class="fixed bottom-10 left-1/2 -translate-x-1/2 z-100 flex items-center gap-4 px-8 py-4 bg-white/90 border-4 border-border rounded-full shadow-[0_15px_40px_rgba(93,64,55,0.15)] backdrop-blur-md transition-all duration-700 ease-[cubic-bezier(0.175,0.885,0.32,1.275)] translate-y-28 opacity-0 pointer-events-none"
 	>
-		<div id="snackbar-icon" class="w-2 h-2 rounded-full animate-pulse">
+		<div
+			id="snackbar-icon"
+			class="w-3 h-3 rounded-full shadow-inner ring-4 ring-white/50"
+		>
 		</div>
+
 		<p
 			id="snackbar-message"
-			class="text-sm font-bold text-white tracking-wide"
+			class="text-sm font-black text-heading italic tracking-tight"
 		>
 		</p>
 	</div>
@@ -124,31 +128,28 @@ export const Theme = {
 	) => {
 		if (!snackbar || !messageEl || !iconEl) return;
 
-		// Limpiamos el timeout anterior si existe
-		if (timeout) {
-			clearTimeout(timeout);
-		}
+		if (timeout) clearTimeout(timeout);
 
+		// Colores Cottagecore para los estados
 		const colors = {
-			error: "bg-red-500 shadow-red-500/20",
-			success: "bg-emerald-500 shadow-emerald-500/20",
-			info: "bg-primary shadow-primary/20",
+			error: "bg-red-300 shadow-[0_0_15px_rgba(248,113,113,0.4)]",
+			success: "bg-secondary shadow-[0_0_15px_rgba(168,213,186,0.4)]",
+			info: "bg-primary shadow-[0_0_15px_rgba(255,181,194,0.4)]",
 		};
 
 		messageEl.textContent = message;
-		iconEl.className = `w-2 h-2 rounded-full animate-pulse ${colors[type]}`;
+		iconEl.className = `w-3 h-3 rounded-full transition-all duration-500 ${colors[type]}`;
 
-		// Mostrar snackbar
+		// Mostrar con la nueva animación
 		snackbar.classList.remove(
-			"translate-y-20",
+			"translate-y-28",
 			"opacity-0",
 			"pointer-events-none",
 		);
 
-		// Asignación compatible con Node y Browser
 		timeout = setTimeout(() => {
 			snackbar.classList.add(
-				"translate-y-20",
+				"translate-y-28",
 				"opacity-0",
 				"pointer-events-none",
 			);
