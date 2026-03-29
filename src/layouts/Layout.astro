@@ -8,13 +8,13 @@ interface Props {
 
 const { title } = Astro.props;
 
-// Objeto Theme inicial con los colores actuales
 export const Theme = {
-	bg: "#0f172a", // Fondo principal
-	surface: "#1e293b", // Fondo de tarjetas/contenedores
-	primary: "#d946ef", // fuchsia-500 (Acentos principales)
-	secondary: "#6366f1", // indigo-500 (Acentos secundarios)
-	accent: "#334155", // slate-700 (Bordes y separadores)
+	bg: "#FFF9F5", // Crema muy suave (papel antiguo)
+	surface: "#FFFFFF", // Blanco puro para tarjetas
+	primary: "#FFB5C2", // Rosa pastel suave
+	secondary: "#A8D5BA", // Verde musgo/menta (toque natural)
+	accent: "#F3E5F5", // Lavanda muy claro para detalles
+	text: "#5D4037", // Marrón cálido (en lugar de negro puro)
 };
 ---
 
@@ -22,12 +22,28 @@ export const Theme = {
 	<head>
 		<meta charset="utf-8" />
 		<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+		<link
+			href="https://fonts.googleapis.com/css2?family=Quicksand:wght@300;500;700&family=Soft+Cream&display=swap"
+			rel="stylesheet"
+		/>
 		<meta name="viewport" content="width=device-width" />
 		<title>{title}</title>
 	</head>
 	<body
-		class="bg-bg text-white min-h-screen flex items-center justify-center p-4 transition-colors duration-500"
+		class="bg-bg text-text min-h-screen flex items-center justify-center p-4 transition-colors duration-500 font-quicksand"
 	>
+		<div
+			class="fixed inset-0 pointer-events-none opacity-20 overflow-hidden"
+		>
+			<div
+				class="absolute top-10 left-10 w-32 h-32 bg-primary blur-[100px]"
+			>
+			</div>
+			<div
+				class="absolute bottom-20 right-10 w-40 h-40 bg-secondary blur-[100px]"
+			>
+			</div>
+		</div>
 		<slot />
 	</body>
 
@@ -53,6 +69,7 @@ export const Theme = {
 		primary: Theme.primary,
 		secondary: Theme.secondary,
 		accent: Theme.accent,
+		text: Theme.text,
 	}}
 >
 	:root {
@@ -61,6 +78,13 @@ export const Theme = {
 		--theme-primary: var(--primary);
 		--theme-secondary: var(--secondary);
 		--theme-accent: var(--accent);
+		--theme-text: var(--text);
+	}
+
+	/* Efecto de bordes "suaves" para todo */
+	* {
+		cursor:
+			url("https://cur.cursors-4u.net/symbols/sym-1/sym49.cur"), auto !important;
 	}
 </style>
 
