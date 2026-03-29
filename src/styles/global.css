@@ -8,7 +8,9 @@
 	--color-secondary: var(--theme-secondary);
 	--color-accent: var(--theme-accent);
 	--color-text: var(--theme-text);
-
+	--color-border: var(--theme-border);
+	--color-heading: var(--theme-heading);
+	--color-muted: var(--theme-muted);
 	/* Nuevos colores para la paleta variada */
 	--color-fairy-blue: #b3e5fc;
 	--color-coquette-tan: #d7ccc8;

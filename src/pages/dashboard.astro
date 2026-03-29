@@ -3,178 +3,135 @@
 import Layout from "../layouts/Layout.astro";
 ---
 
-<Layout title="Dashboard de Proyectos | Picrew">
-	<!-- Pantalla de Carga Inicial -->
+<Layout title="Mis Proyectos | Layerly">
 	<div
 		id="loading"
-		class="text-secondary font-medium animate-pulse text-center w-full"
+		class="text-primary font-bold animate-bounce text-center w-full italic"
 	>
-		Cargando tu información...
+		Preparando el jardín...
 	</div>
 
 	<div
 		id="dashboard-content"
-		class="hidden w-full max-w-4xl p-4 sm:p-10 bg-surface rounded-2xl sm:rounded-3xl shadow-2xl border border-accent/50 relative overflow-hidden backdrop-blur-xl"
+		class="hidden w-full max-w-5xl p-6 sm:p-12 bg-surface/90 rounded-[3rem] shadow-[0_20px_60px_rgba(255,181,194,0.2)] border-4 border-white relative overflow-hidden backdrop-blur-md"
 	>
-		<!-- Decoraciones (Gradients Blur) -->
 		<div
-			class="absolute -top-32 -right-32 w-64 h-64 sm:w-96 sm:h-96 bg-secondary rounded-full mix-blend-screen filter blur-[80px] sm:blur-[100px] opacity-20 pointer-events-none"
+			class="absolute -top-10 -right-10 w-40 h-40 bg-primary/10 rounded-full blur-3xl pointer-events-none"
 		>
 		</div>
 		<div
-			class="absolute -bottom-32 -left-32 w-64 h-64 sm:w-96 sm:h-96 bg-primary rounded-full mix-blend-screen filter blur-[80px] sm:blur-[100px] opacity-20 pointer-events-none"
+			class="absolute -bottom-10 -left-10 w-40 h-40 bg-secondary/10 rounded-full blur-3xl pointer-events-none"
 		>
 		</div>
 
 		<div class="relative z-10 w-full">
-			<!-- Encabezado y Saludo -->
 			<div
-				class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8 border-b border-accent/50 pb-6"
+				class="flex flex-col sm:flex-row sm:items-center justify-between gap-6 mb-10 border-b-2 border-border pb-8"
 			>
 				<div>
 					<h1
-						class="text-2xl sm:text-3xl font-extrabold tracking-tight bg-linear-to-r from-secondary to-primary bg-clip-text text-transparent"
+						class="text-3xl sm:text-4xl font-black tracking-tight text-heading italic"
 					>
-						Hola, <span id="user-display">Usuario</span>
+						Hola, <span id="user-display" class="text-primary"
+							>Usuario</span
+						>
 					</h1>
-					<p class="text-slate-400 mt-1 text-sm font-medium">
-						Gestiona tus proyectos
+					<p class="text-muted mt-2 text-sm font-medium italic">
+						¿Qué vamos a crear hoy en nuestro rincón?
 					</p>
 				</div>
 				<button
 					id="logout-btn"
-					class="w-full sm:w-auto px-5 py-3 sm:py-2.5 rounded-xl text-sm font-semibold bg-accent/20 hover:bg-accent/40 border border-accent/70 text-slate-300 transition-colors shrink-0"
+					class="px-6 py-2.5 rounded-full text-xs font-bold bg-bg hover:bg-accent text-slate-500 transition-all border-2 border-transparent hover:border-primary/20 shrink-0 uppercase tracking-widest"
 				>
-					Cerrar Sesión
+					Descansar (Salir)
 				</button>
 			</div>
 
-			<!-- Sección de Proyectos -->
 			<div>
-				<div
-					class="flex flex-col sm:flex-row sm:items-center justify-between mb-6 gap-4"
-				>
-					<h2 class="text-xl font-bold text-white tracking-wide">
-						Mis Proyectos
+				<div class="flex items-center justify-between mb-8">
+					<h2
+						class="text-xl font-black text-text/80 uppercase tracking-tighter italic"
+					>
+						Colección de Avatares
 					</h2>
 					<button
 						id="new-project-btn"
-						class="w-full sm:w-auto px-5 py-3 sm:py-2 bg-linear-to-r from-primary to-secondary hover:brightness-110 text-white text-sm font-bold rounded-xl transition-all shadow-lg focus:ring-2 focus:ring-primary focus:outline-none"
+						class="px-8 py-3 bg-primary hover:scale-105 text-white text-sm font-bold rounded-full transition-all shadow-[0_10px_20px_rgba(255,181,194,0.3)]"
 					>
 						+ Nuevo Proyecto
 					</button>
 				</div>
 
-				<!-- Estado de Carga (Skeletons) -->
 				<div
 					id="projects-skeleton"
-					class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-5"
+					class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-8"
 				>
-					<div
-						class="animate-pulse bg-slate-800/60 h-[160px] rounded-2xl border border-accent/30 hidden md:block"
-					>
-					</div>
-					<div
-						class="animate-pulse bg-slate-800/60 h-[160px] rounded-2xl border border-accent/30 hidden sm:block"
-					>
-					</div>
-					<div
-						class="animate-pulse bg-slate-800/60 h-[160px] rounded-2xl border border-accent/30"
-					>
-					</div>
+					{
+						[1, 2, 3].map(() => (
+							<div class="bg-bg/50 h-[200px] rounded-[2rem] border-2 border-dashed border-accent animate-pulse" />
+						))
+					}
 				</div>
 
-				<!-- Lista de Proyectos -->
 				<div
 					id="projects-grid"
-					class="hidden grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-5"
+					class="hidden grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-8"
 				>
-					<!-- Se inyectan las tarjetas aquí -->
 				</div>
 
-				<!-- Estado Vacío -->
 				<div
 					id="empty-state"
-					class="hidden text-center py-12 px-4 border-2 border-dashed border-accent/40 rounded-3xl bg-slate-900/30"
+					class="hidden text-center py-16 px-6 border-4 border-dashed border-border rounded-[3rem] bg-bg/30"
 				>
-					<svg
-						class="mx-auto h-12 w-12 text-slate-500 mb-4"
-						fill="none"
-						viewBox="0 0 24 24"
-						stroke="currentColor"
-					>
-						<path
-							stroke-linecap="round"
-							stroke-linejoin="round"
-							stroke-width="1.5"
-							d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 002-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"
-						></path>
-					</svg>
-					<h3 class="text-lg font-medium text-slate-300">
-						Aún no tienes proyectos
+					<div class="text-6xl mb-4">🌸</div>
+					<h3 class="text-xl font-bold text-muted italic">
+						El jardín está vacío
 					</h3>
-					<p class="mt-1 text-sm text-slate-500 mb-6">
-						Dale rienda suelta a tu imaginación y crea el primero.
+					<p class="mt-2 text-sm text-muted mb-8 italic">
+						Comienza tu primera aventura mágica ahora mismo.
 					</p>
 					<button
 						id="empty-new-btn"
-						class="w-full sm:w-auto px-5 py-3 sm:py-2.5 bg-accent/30 hover:bg-accent/50 text-white text-sm font-medium rounded-xl transition-all border border-accent/60"
+						class="px-10 py-4 bg-white border-2 border-primary text-primary hover:bg-primary hover:text-white text-sm font-bold rounded-full transition-all"
 					>
-						Empezar un Proyecto
+						Plantar un Proyecto
 					</button>
 				</div>
 			</div>
 		</div>
 	</div>
 
-	<!-- Modal de Nuevo Proyecto -->
 	<dialog
 		id="new-project-modal"
-		class="bg-surface border border-accent/50 rounded-2xl shadow-2xl p-0 backdrop:bg-slate-950/80 backdrop:backdrop-blur-sm w-[90%] max-w-md m-auto text-white"
+		class="bg-white border-4 border-primary/20 rounded-[2.5rem] shadow-2xl p-0 backdrop:backdrop-blur-sm w-[90%] max-w-md m-auto overflow-hidden"
 	>
-		<div class="p-6">
-			<h3 class="text-xl font-bold mb-2">Crear Nuevo Proyecto</h3>
-			<p class="text-sm text-slate-400 mb-6">
-				Escribe un nombre genial para tu nuevo avatar.
+		<div class="p-10">
+			<h3 class="text-2xl font-black text-text italic mb-2">
+				Nuevo Retrato
+			</h3>
+			<p class="text-sm text-slate-400 mb-8 italic">
+				¿Cómo se llamará esta nueva criatura?
 			</p>
 
 			<input
 				type="text"
 				id="project-name-input"
-				placeholder="Ej. Elfo Arquero..."
-				class="appearance-none block w-full px-5 py-3.5 bg-slate-900/50 border border-accent/50 rounded-xl shadow-inner placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary transition-all duration-300 mb-6"
+				placeholder="Nombre del proyecto..."
+				class="block w-full px-6 py-4 bg-bg border-2 border-transparent rounded-full placeholder-slate-300 focus:outline-none focus:border-primary transition-all mb-8 text-text"
 			/>
 
-			<div class="flex flex-col sm:flex-row gap-3 sm:justify-end mt-2">
+			<div class="flex gap-4">
 				<button
 					id="cancel-project-btn"
-					class="w-full sm:w-auto px-5 py-3 sm:py-2.5 rounded-xl text-sm font-semibold bg-accent/20 hover:bg-accent/40 text-slate-300 transition-colors border border-accent/50"
-					>Cancelar</button
+					class="flex-1 py-4 text-xs font-bold uppercase tracking-widest text-slate-400 hover:text-text transition-colors"
+					>Atrás</button
 				>
 				<button
 					id="confirm-project-btn"
-					class="w-full sm:w-auto px-5 py-3 sm:py-2.5 rounded-xl text-sm font-bold bg-linear-to-r from-primary to-secondary hover:brightness-110 text-white transition-colors flex items-center justify-center border border-transparent"
+					class="flex-2 py-4 bg-primary text-white rounded-full font-bold shadow-lg hover:scale-105 transition-all"
+					>Crear</button
 				>
-					<span id="btn-text">Crear Proyecto</span>
-					<svg
-						id="btn-spinner"
-						class="animate-spin ml-2 h-4 w-4 hidden"
-						xmlns="http://www.w3.org/2000/svg"
-						fill="none"
-						viewBox="0 0 24 24"
-						><circle
-							class="opacity-25"
-							cx="12"
-							cy="12"
-							r="10"
-							stroke="currentColor"
-							stroke-width="4"></circle><path
-							class="opacity-75"
-							fill="currentColor"
-							d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-						></path></svg
-					>
-				</button>
 			</div>
 		</div>
 	</dialog>

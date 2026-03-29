@@ -15,6 +15,9 @@ export const Theme = {
 	secondary: "#A8D5BA", // Verde musgo/menta (toque natural)
 	accent: "#F3E5F5", // Lavanda muy claro para detalles
 	text: "#5D4037", // Marrón cálido (en lugar de negro puro)
+	border: "#EAD7D1", // Un canela suave que define formas sin ser agresivo
+	heading: "#4E342E", // Marrón más oscuro para que los títulos resalten
+	muted: "#9E8279", // Para textos secundarios/deshabilitados
 };
 ---
 
@@ -70,6 +73,9 @@ export const Theme = {
 		secondary: Theme.secondary,
 		accent: Theme.accent,
 		text: Theme.text,
+		border: Theme.border,
+		heading: Theme.heading,
+		muted: Theme.muted,
 	}}
 >
 	:root {
@@ -79,12 +85,28 @@ export const Theme = {
 		--theme-secondary: var(--secondary);
 		--theme-accent: var(--accent);
 		--theme-text: var(--text);
+		--theme-border: var(--border);
+		--theme-heading: var(--heading);
+		--theme-muted: var(--muted);
+	}
+
+	body {
+		background-image: radial-gradient(
+			var(--theme-primary) 0.5px,
+			transparent 0.5px
+		);
+		background-size: 24px 24px;
+		background-color: var(--theme-bg);
+		color: var(--theme-text);
+		font-family: "Quicksand", sans-serif;
 	}
 
 	/* Efecto de bordes "suaves" para todo */
 	* {
 		cursor:
-			url("https://cur.cursors-4u.net/symbols/sym-1/sym49.cur"), auto !important;
+			url("https://cdn.cursors-4u.net/previews/pink-rose-flower-e61b4b6e-32.webp")
+				32 32,
+			auto !important;
 	}
 </style>
 
