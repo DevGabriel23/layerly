@@ -2,6 +2,8 @@
 import Layout from "../../layouts/Layout.astro";
 import LayerCard from "../../components/editor/LayerCard.astro";
 import { createSupabaseServer } from "../../lib/supabase";
+import ColorPicker from "../../components/editor/ColorPicker.astro";
+import Modal from "../../components/ui/Modal.astro";
 
 const { id } = Astro.params;
 const user = Astro.locals.user;
@@ -33,122 +35,198 @@ const sortedLayers = layers || [];
 		data-project-id={id}
 		class="w-full max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-12 gap-8 p-4 sm:p-8 h-screen overflow-hidden"
 	>
-		<div class="lg:col-span-5 flex flex-col gap-6 h-full">
+		<div
+			class="lg:col-span-5 flex flex-col gap-6 h-full overflow-y-auto pr-2 custom-scrollbar"
+		>
 			<div
-				class="relative aspect-square bg-slate-950 border border-white/10 rounded-4xl overflow-hidden shadow-2xl"
+				class="relative aspect-square bg-white border-[6px] border-border rounded-[3rem] overflow-hidden shadow-[0_20px_50px_rgba(93,64,55,0.1)]"
 			>
 				<div
+					class="absolute inset-0 opacity-[0.03] pointer-events-none bg-[url('https://www.transparenttextures.com/patterns/canvas-fabric.png')]"
+				>
+				</div>
+
+				<div
 					id="canvas-container"
-					class="w-full h-full relative flex items-center justify-center"
+					class="w-full h-full relative flex items-center justify-center bg-bg"
 				>
 					<p
 						id="canvas-placeholder"
-						class="text-slate-600 font-bold uppercase tracking-widest text-xs animate-pulse"
+						class="text-slate-500 font-black uppercase tracking-[0.2em] text-[10px] animate-pulse italic"
 					>
 						Selecciona variantes
 					</p>
 				</div>
 			</div>
-			<div class="bg-white/5 border border-white/10 p-6 rounded-3xl">
-				<h1 class="text-2xl font-black text-white italic uppercase">
+
+			<div class="cottage-card p-8">
+				<p
+					class="text-[10px] font-black text-primary uppercase tracking-[0.3em] mb-2"
+				>
+					Proyecto Activo
+				</p>
+				<h1
+					class="text-3xl font-black text-heading italic uppercase tracking-tighter mb-6"
+				>
 					{project.project_name}
 				</h1>
+
 				<button
 					id="export-btn"
 					disabled
 					data-project-name={project.project_name}
-					class="mt-4 w-full py-4 bg-linear-to-r from-primary to-secondary text-white font-black uppercase tracking-widest rounded-2xl transition-all hover:scale-[1.02] active:scale-95 disabled:opacity-30 disabled:cursor-not-allowed disabled:hover:scale-100 disabled:grayscale"
+					class="cottage-btn-primary w-full py-5 text-sm!"
 				>
-					Exportar {project.project_name}.png
+					Exportar PNG ✨
 				</button>
 			</div>
 		</div>
 
-		<div class="lg:col-span-7 flex flex-col h-full overflow-hidden">
-			<div
-				class="flex items-center justify-between border-b border-white/5 pb-4"
+		<div class="lg:col-span-7 flex flex-col h-full">
+			<header
+				class="flex items-center justify-between border-b-4 border-border/20 pb-6"
 			>
-				<a
-					href="/dashboard"
-					class="p-2 text-slate-500 hover:text-white transition-colors"
-				>
-					<svg
-						xmlns="http://www.w3.org/2000/svg"
-						width="24"
-						height="24"
-						viewBox="0 0 24 24"
-						fill="none"
-						stroke="currentColor"
-						stroke-width="2"
-						stroke-linecap="round"
-						stroke-linejoin="round"
-						><path d="m15 18-6-6 6-6"></path></svg
+				<div class="flex items-center gap-4">
+					<a
+						href="/dashboard"
+						class="w-11 h-11 flex items-center justify-center rounded-full bg-bg border-2 border-border/40 text-muted hover:text-primary hover:border-primary transition-all"
 					>
-				</a>
-				<h2
-					class="text-2xl font-bold text-white italic uppercase tracking-tight"
-				>
-					Capas
-				</h2>
+						<svg
+							xmlns="http://www.w3.org/2000/svg"
+							width="20"
+							height="20"
+							viewBox="0 0 24 24"
+							fill="none"
+							stroke="currentColor"
+							stroke-width="3"
+							stroke-linecap="round"
+							stroke-linejoin="round"
+							><path d="m15 18-6-6 6-6"></path></svg
+						>
+					</a>
+					<h2
+						class="text-2xl font-black text-heading italic uppercase tracking-tighter"
+					>
+						Capas del Diseño
+					</h2>
+				</div>
+
 				<button
 					id="open-modal-btn"
-					class="px-5 py-2.5 bg-primary rounded-2xl text-xs font-black uppercase text-white hover:scale-105 transition-all"
+					class="cottage-btn-primary text-sm!"
 				>
 					+ Nueva Capa
 				</button>
-			</div>
+			</header>
 
 			<div
 				id="layers-list"
-				class="flex-1 overflow-y-auto mt-6 pr-2 custom-scrollbar"
+				class="flex-1 overflow-y-auto mt-6 pr-4 custom-scrollbar pb-20"
 			>
-				{sortedLayers.map((layer) => <LayerCard layer={layer} />)}
+				{
+					sortedLayers.length > 0 ? (
+						sortedLayers.map((layer) => <LayerCard layer={layer} />)
+					) : (
+						<div
+							id="empty-layers-state"
+							class="flex flex-col items-center justify-center py-20 px-6 text-center"
+						>
+							<div class="relative mb-8">
+								<div class="w-20 h-20 bg-bg border-4 border-dashed border-border/40 rounded-4xl flex items-center justify-center animate-pulse">
+									<span class="text-3xl opacity-40">🌱</span>
+								</div>
+								<div class="absolute -top-2 -right-2 w-6 h-6 bg-primary/20 rounded-full animate-ping" />
+							</div>
+
+							<h3 class="text-xl font-black text-heading italic uppercase tracking-tighter mb-2">
+								Tu jardín está vacío
+							</h3>
+							<p class="text-xs text-muted font-bold max-w-[200px] leading-relaxed italic">
+								Siembra tu primera capa para empezar a crear
+								magia.
+							</p>
+
+							<div class="w-full mt-12 space-y-4 opacity-30 pointer-events-none">
+								<div class="h-24 w-full bg-bg border-2 border-border/20 rounded-4xl animate-pulse" />
+								<div class="h-24 w-[90%] mx-auto bg-bg border-2 border-border/10 rounded-4xl animate-pulse" />
+							</div>
+						</div>
+					)
+				}
 			</div>
 		</div>
 	</main>
 
-	<dialog
-		id="new-layer-modal"
-		class="bg-transparent backdrop:backdrop-blur-md p-0 m-auto outline-none"
-	>
-		<div
-			class="bg-slate-900 border border-white/10 rounded-[2.5rem] p-8 w-[400px] shadow-2xl"
-		>
-			<h3 class="text-2xl font-black text-white italic uppercase mb-6">
-				Nueva Capa
-			</h3>
-			<div class="space-y-4">
+	<Modal id="new-layer-modal" title="Nueva Capa">
+		<div class="space-y-8 p-2">
+			<div>
+				<label class="cottage-label">Nombre de la Capa</label>
 				<input
 					type="text"
 					id="layer-name-input"
-					placeholder="Nombre (ej: Cabello)"
-					class="w-full bg-white/5 border border-white/10 rounded-2xl px-5 py-4 text-white outline-none focus:border-primary"
+					placeholder="ej: Sombras Mágicas"
+					class="w-full bg-bg border-4 border-border/40 rounded-full px-6 py-4 text-heading outline-none focus:border-primary focus:bg-white transition-all placeholder:text-muted/30 shadow-inner"
 				/>
-				<label class="flex items-center gap-3 cursor-pointer p-2">
+			</div>
+
+			<label class="flex items-center gap-4 cursor-pointer group">
+				<div class="relative flex items-center justify-center">
 					<input
 						type="checkbox"
 						id="layer-hex-check"
-						class="w-5 h-5 rounded bg-white/5 border-white/10 text-primary"
+						class="peer sr-only"
 					/>
-					<span class="text-sm font-bold text-slate-400"
-						>¿Soporta colores?</span
+					<div
+						class="w-8 h-8 rounded-full border-4 border-border bg-white peer-checked:bg-primary peer-checked:border-white transition-all shadow-sm"
 					>
-				</label>
+					</div>
+					<svg
+						class="absolute w-4 h-4 text-white scale-0 peer-checked:scale-100 transition-transform"
+						xmlns="http://www.w3.org/2000/svg"
+						viewBox="0 0 24 24"
+						fill="none"
+						stroke="currentColor"
+						stroke-width="4"
+						stroke-linecap="round"
+						stroke-linejoin="round"
+						><polyline points="20 6 9 17 4 12"></polyline></svg
+					>
+				</div>
+				<span
+					class="text-sm font-bold text-muted italic group-hover:text-heading transition-colors"
+					>¿Esta capa usará colores?</span
+				>
+			</label>
+
+			<div
+				id="default-color-container"
+				class="hidden animate-in fade-in zoom-in-95 duration-300"
+			>
+				<label class="cottage-label mb-3">Tono Inicial</label>
+				<ColorPicker value="#FFB5C2" class="new-layer-color-picker" />
 			</div>
-			<div class="flex gap-3 mt-8">
-				<button
-					id="close-modal-btn"
-					class="flex-1 py-4 text-slate-500 font-black text-xs uppercase"
-					>Cancelar</button
+
+			<div class="space-y-8 p-2">
+				<div
+					class="flex flex-col gap-3 pt-6 border-t-2 border-border/10"
 				>
-				<button
-					id="confirm-layer-btn"
-					class="flex-1 py-4 bg-primary text-white rounded-2xl font-black text-xs uppercase"
-					>Crear</button
-				>
+					<button
+						id="confirm-layer-btn"
+						class="w-full py-4 bg-primary text-white rounded-full font-black text-xs uppercase tracking-widest shadow-lg hover:scale-[1.02] active:scale-95 transition-all"
+					>
+						¡Crear Capa! ✨
+					</button>
+					<button
+						type="button"
+						onclick="window.closeModal('new-layer-modal')"
+						class="w-full py-3 text-muted font-bold text-[10px] uppercase tracking-[0.2em] hover:text-heading transition-colors"
+					>
+						Tal vez luego (Cancelar)
+					</button>
+				</div>
 			</div>
 		</div>
-	</dialog>
+	</Modal>
 </Layout>
 
 <script>
@@ -262,17 +340,28 @@ const sortedLayers = layers || [];
 		document.querySelectorAll(".layer-card").forEach((card) => {
 			const el = card as HTMLElement;
 			const id = el.dataset.layerId!;
-			const cp = el.querySelector(
-				".layer-color-picker",
+			const pickerWrapper = el.querySelector(
+				".layer-color-picker-wrapper",
+			);
+			const internalPicker = pickerWrapper?.querySelector(
+				".magic-picker-dot",
 			) as HTMLInputElement;
 
 			state[id] = {
 				url: null,
 				urlMaster: null, // Inicialmente vacío
-				color: cp?.value || "#ffffff",
+				color: internalPicker?.value || "#ffffff",
 				z: parseInt(el.dataset.z!),
 				supportHex: el.dataset.supportHex === "true",
 			};
+
+			pickerWrapper?.addEventListener("colorChange", (e: any) => {
+				const newColor = e.detail;
+				if (state[id]) {
+					state[id].color = newColor;
+					updateCanvas(); // Refrescar el render
+				}
+			});
 
 			el.querySelectorAll(".variant-item").forEach((btn) => {
 				btn.addEventListener("click", () => {
@@ -295,11 +384,6 @@ const sortedLayers = layers || [];
 					}
 					updateCanvas();
 				});
-			});
-
-			cp?.addEventListener("input", (e) => {
-				state[id].color = (e.target as HTMLInputElement).value;
-				updateCanvas();
 			});
 
 			el.querySelector(".file-upload-input")?.addEventListener(
@@ -435,22 +519,62 @@ const sortedLayers = layers || [];
 		}
 
 		// --- Create layer ---
+		const hexCheck = document.getElementById(
+			"layer-hex-check",
+		) as HTMLInputElement;
+		const defaultColorContainer = document.getElementById(
+			"default-color-container",
+		);
+		const newLayerPicker = document.querySelector(
+			".new-layer-color-picker",
+		) as HTMLElement;
+
+		// 1. Mostrar/Ocultar el picker según el checkbox
+		hexCheck?.addEventListener("change", () => {
+			if (hexCheck.checked) {
+				defaultColorContainer?.classList.remove("hidden");
+			} else {
+				defaultColorContainer?.classList.add("hidden");
+			}
+		});
+
 		const createLayer = async () => {
-			const name = (
-				document.getElementById("layer-name-input") as HTMLInputElement
-			).value;
-			const hex = (
-				document.getElementById("layer-hex-check") as HTMLInputElement
-			).checked;
-			if (!name) return window.showToast("Nombre requerido", "error");
+			const nameInput = document.getElementById(
+				"layer-name-input",
+			) as HTMLInputElement;
+			const name = nameInput.value;
+			const supportHex = hexCheck.checked;
+
+			const internalPicker = newLayerPicker?.querySelector(
+				".magic-picker-dot",
+			) as HTMLInputElement;
+			const defaultHex = supportHex
+				? internalPicker.value.replace("#", "")
+				: null;
+
+			if (!name)
+				return window.showToast(
+					"¡Ponle un nombre a tu creación!",
+					"error",
+				);
+
+			const currentZValues = Object.values(state).map((s) => s.z);
+			const maxZ =
+				currentZValues.length > 0 ? Math.max(...currentZValues) : -10;
+			const nextZ = maxZ + 10;
+
+			window.showToast("Sembrando nueva capa...", "info");
 
 			const { error } = await supabase.from("layers").insert({
 				project_id: projectId,
-				name,
-				support_hex: hex,
-				z_order: Object.keys(state).length * 10,
+				name: name,
+				support_hex: supportHex,
+				default_hex: defaultHex,
+				z_order: nextZ,
 			});
+
 			if (!error) window.location.reload();
+			else window.showToast("No pudimos crear la capa", "error");
 		};
 
 		// --- Edit layer ---
@@ -470,12 +594,35 @@ const sortedLayers = layers || [];
 		});
 
 		// --- Modal ---
-		document
-			.getElementById("open-modal-btn")
-			?.addEventListener("click", () => modal.showModal());
-		document
-			.getElementById("close-modal-btn")
-			?.addEventListener("click", () => modal.close());
+		const openModalBtn = document.getElementById("open-modal-btn");
+		const nameInput = document.getElementById(
+			"layer-name-input",
+		) as HTMLInputElement;
+
+		openModalBtn?.addEventListener("click", () => {
+			// 1. Limpiar el nombre
+			if (nameInput) nameInput.value = "";
+
+			// 2. Resetear el checkbox y ocultar el contenedor de color
+			if (hexCheck) {
+				hexCheck.checked = false;
+				defaultColorContainer?.classList.add("hidden");
+			}
+
+			// 3. Resetear el ColorPicker al rosa por defecto
+			const internalPicker = newLayerPicker?.querySelector(
+				".magic-picker-dot",
+			) as HTMLInputElement;
+			const internalText = newLayerPicker?.querySelector(
+				".magic-picker-text",
+			) as HTMLInputElement;
+			if (internalPicker) internalPicker.value = "#FFB5C2";
+			if (internalText) internalText.value = "FFB5C2";
+
+			// 4. Finalmente, abrir el modal
+			window.openModal("new-layer-modal");
+		});
+
 		document
 			.getElementById("confirm-layer-btn")
 			?.addEventListener("click", async () => createLayer());
@@ -591,6 +738,7 @@ const sortedLayers = layers || [];
 					);
 				}
 			});
+
 		// -- Delete layer --
 		document.querySelectorAll(".delete-layer-btn").forEach((btn) => {
 			btn.addEventListener("click", async () => {
@@ -669,19 +817,3 @@ const sortedLayers = layers || [];
 		});
 	});
 </script>
-
-<style is:global>
-	.custom-scrollbar::-webkit-scrollbar {
-		width: 6px;
-	}
-	.custom-scrollbar::-webkit-scrollbar-track {
-		background: transparent;
-	}
-	.custom-scrollbar::-webkit-scrollbar-thumb {
-		background: rgba(255, 255, 255, 0.1);
-		border-radius: 10px;
-	}
-	.custom-scrollbar::-webkit-scrollbar-thumb:hover {
-		background: #c434f3;
-	}
-</style>

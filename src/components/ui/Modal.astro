@@ -1,0 +1,59 @@
+---
+// src/components/ui/Modal.astro
+
+import { randomUUID } from "node:crypto";
+
+interface Props {
+	id?: string; // Ahora es opcional
+	title?: string;
+	class?: string;
+}
+
+// Si llega un id, lo usamos. Si no, generamos uno único para esta instancia.
+const {
+	id = `modal-${randomUUID().split("-")[0]}`,
+	title,
+	class: className,
+} = Astro.props;
+---
+
+<div id={id} class="modal-overlay">
+	<div class="modal-content">
+		<div
+			class="absolute -top-10 -right-10 w-32 h-32 bg-primary/5 rounded-full blur-3xl pointer-events-none"
+		>
+		</div>
+
+		{
+			title && (
+				<header class="mb-6 relative">
+					<h3 class="text-2xl font-black text-heading italic uppercase tracking-tighter">
+						{title}
+					</h3>
+				</header>
+			)
+		}
+
+		<div class="relative">
+			<slot />
+		</div>
+
+		<button
+			onclick={`window.closeModal('${id}')`}
+			class="close-x-btn absolute top-6 right-6 text-muted hover:text-primary transition-colors"
+		>
+			<svg
+				xmlns="http://www.w3.org/2000/svg"
+				width="20"
+				height="20"
+				viewBox="0 0 24 24"
+				fill="none"
+				stroke="currentColor"
+				stroke-width="3"
+				stroke-linecap="round"
+				stroke-linejoin="round"
+				><path d="M18 6 6 18M6 6l12 12"></path></svg
+			>
+		</button>
+	</div>
+</div>
