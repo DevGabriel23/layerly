@@ -1,5 +1,6 @@
 ---
 // src/layouts/Layout.astro
+import Footer from "../components/ui/Footer.astro";
 import "../styles/global.css";
 
 interface Props {
@@ -33,7 +34,7 @@ export const Theme = {
 		<title>{title}</title>
 	</head>
 	<body
-		class="bg-bg text-text min-h-screen flex items-center justify-center p-4 transition-colors duration-500 font-quicksand"
+		class="bg-bg text-text min-h-screen flex flex-col items-center justify-center p-4 transition-colors duration-500 font-quicksand"
 	>
 		<div
 			class="fixed inset-0 pointer-events-none opacity-20 overflow-hidden"
@@ -48,24 +49,24 @@ export const Theme = {
 			</div>
 		</div>
 		<slot />
-	</body>
-
-	<div
-		id="snackbar"
-		class="fixed bottom-10 left-1/2 -translate-x-1/2 z-100 flex items-center gap-4 px-8 py-4 bg-white/90 border-4 border-border rounded-full shadow-[0_15px_40px_rgba(93,64,55,0.15)] backdrop-blur-md transition-all duration-700 ease-[cubic-bezier(0.175,0.885,0.32,1.275)] translate-y-28 opacity-0 pointer-events-none"
-	>
+		<Footer />
 		<div
-			id="snackbar-icon"
-			class="w-3 h-3 rounded-full shadow-inner ring-4 ring-white/50"
+			id="snackbar"
+			class="fixed bottom-10 left-1/2 -translate-x-1/2 z-100 flex items-center gap-4 px-8 py-4 bg-white/90 border-4 border-border rounded-full shadow-[0_15px_40px_rgba(93,64,55,0.15)] backdrop-blur-md transition-all duration-700 ease-[cubic-bezier(0.175,0.885,0.32,1.275)] translate-y-28 opacity-0 pointer-events-none"
 		>
-		</div>
+			<div
+				id="snackbar-icon"
+				class="w-3 h-3 rounded-full shadow-inner ring-4 ring-white/50"
+			>
+			</div>
 
-		<p
-			id="snackbar-message"
-			class="text-sm font-black text-heading italic tracking-tight"
-		>
-		</p>
-	</div>
+			<p
+				id="snackbar-message"
+				class="text-sm font-black text-heading italic tracking-tight"
+			>
+			</p>
+		</div>
+	</body>
 </html>
 
 <style

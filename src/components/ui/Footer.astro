@@ -1,0 +1,60 @@
+---
+const currentYear = new Date().getFullYear();
+---
+
+<footer
+	class="w-full max-w-7xl mx-auto px-8 py-12 mt-4 border-t-4 border-border/30 border-dashed"
+>
+	<div class="flex flex-col md:flex-row justify-between items-center gap-8">
+		<div class="flex flex-col items-center md:items-start gap-2">
+			<div class="flex items-center gap-2">
+				<span class="text-2xl">🌸</span>
+				<span
+					class="text-xl font-black text-heading italic uppercase tracking-tighter"
+					>Layerly</span
+				>
+			</div>
+			<p
+				class="text-[10px] font-bold text-muted uppercase tracking-[0.2em] italic"
+			>
+				Cosechando retratos mágicos
+			</p>
+		</div>
+
+		<nav class="flex gap-8 items-center">
+			<a
+				href="/dashboard"
+				class="text-xs font-black text-muted hover:text-primary transition-colors uppercase tracking-widest"
+				>Jardín</a
+			>
+			<a
+				href="#"
+				class="text-xs font-black text-muted hover:text-primary transition-colors uppercase tracking-widest"
+				>Guía</a
+			>
+			<a
+				href="https://github.com"
+				target="_blank"
+				class="text-xs font-black text-muted hover:text-primary transition-colors uppercase tracking-widest"
+				>Semillas</a
+			>
+		</nav>
+
+		<div class="flex flex-col items-center md:items-end gap-1">
+			<span class="text-[10px] font-black text-heading italic uppercase">
+				&copy; {currentYear} Layerly Project
+			</span>
+			<div class="flex items-center gap-1 opacity-50">
+				<span
+					class="text-[9px] font-bold text-muted uppercase tracking-tighter italic"
+					>Hecho con</span
+				>
+				<span class="text-xs text-red-300">♥</span>
+				<span
+					class="text-[9px] font-bold text-muted uppercase tracking-tighter italic"
+					>por Rehin</span
+				>
+			</div>
+		</div>
+	</div>
+</footer>
