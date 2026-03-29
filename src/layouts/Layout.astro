@@ -1,0 +1,137 @@
+---
+// src/layouts/Layout.astro
+import "../styles/global.css";
+
+interface Props {
+	title: string;
+}
+
+const { title } = Astro.props;
+
+// Objeto Theme inicial con los colores actuales
+export const Theme = {
+	bg: "#0f172a", // Fondo principal
+	surface: "#1e293b", // Fondo de tarjetas/contenedores
+	primary: "#d946ef", // fuchsia-500 (Acentos principales)
+	secondary: "#6366f1", // indigo-500 (Acentos secundarios)
+	accent: "#334155", // slate-700 (Bordes y separadores)
+};
+---
+
+<html lang="es">
+	<head>
+		<meta charset="utf-8" />
+		<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+		<meta name="viewport" content="width=device-width" />
+		<title>{title}</title>
+	</head>
+	<body
+		class="bg-bg text-white min-h-screen flex items-center justify-center p-4 transition-colors duration-500"
+	>
+		<slot />
+	</body>
+
+	<div
+		id="snackbar"
+		class="fixed bottom-8 left-1/2 -translate-x-1/2 z-100 flex items-center gap-3 px-6 py-4 bg-slate-900/90 border border-white/10 backdrop-blur-xl rounded-2xl shadow-2xl transition-all duration-500 translate-y-20 opacity-0 pointer-events-none"
+	>
+		<div id="snackbar-icon" class="w-2 h-2 rounded-full animate-pulse">
+		</div>
+		<p
+			id="snackbar-message"
+			class="text-sm font-bold text-white tracking-wide"
+		>
+		</p>
+	</div>
+</html>
+
+<style
+	is:global
+	define:vars={{
+		bg: Theme.bg,
+		surface: Theme.surface,
+		primary: Theme.primary,
+		secondary: Theme.secondary,
+		accent: Theme.accent,
+	}}
+>
+	:root {
+		--theme-bg: var(--bg);
+		--theme-surface: var(--surface);
+		--theme-primary: var(--primary);
+		--theme-secondary: var(--secondary);
+		--theme-accent: var(--accent);
+	}
+</style>
+
+<script>
+	const snackbar = document.getElementById("snackbar");
+	const messageEl = document.getElementById("snackbar-message");
+	const iconEl = document.getElementById("snackbar-icon");
+
+	// Esta es la forma infalible:
+	let timeout: ReturnType<typeof setTimeout> | undefined;
+
+	window.showToast = (
+		message: string,
+		type: "error" | "success" | "info" = "info",
+	) => {
+		if (!snackbar || !messageEl || !iconEl) return;
+
+		// Limpiamos el timeout anterior si existe
+		if (timeout) {
+			clearTimeout(timeout);
+		}
+
+		const colors = {
+			error: "bg-red-500 shadow-red-500/20",
+			success: "bg-emerald-500 shadow-emerald-500/20",
+			info: "bg-primary shadow-primary/20",
+		};
+
+		messageEl.textContent = message;
+		iconEl.className = `w-2 h-2 rounded-full animate-pulse ${colors[type]}`;
+
+		// Mostrar snackbar
+		snackbar.classList.remove(
+			"translate-y-20",
+			"opacity-0",
+			"pointer-events-none",
+		);
+
+		// Asignación compatible con Node y Browser
+		timeout = setTimeout(() => {
+			snackbar.classList.add(
+				"translate-y-20",
+				"opacity-0",
+				"pointer-events-none",
+			);
+		}, 4000);
+	};
+
+	document.addEventListener("DOMContentLoaded", () => {
+		const urlParams = new URLSearchParams(window.location.search);
+		const error = urlParams.get("error");
+		const success = urlParams.get("success");
+
+		const errorMessages: Record<string, string> = {
+			not_found: "El proyecto no existe o fue eliminado.",
+			unauthorized: "No tienes permiso para editar este proyecto.",
+			db: "Error de conexión con la base de datos.",
+			upload_fail: "No se pudo subir la imagen a Cloudinary.",
+		};
+
+		if (error && errorMessages[error]) {
+			window.showToast(errorMessages[error], "error");
+
+			// Limpiar la URL sin recargar la página
+			const newUrl = window.location.pathname;
+			window.history.replaceState({}, "", newUrl);
+		}
+
+		if (success) {
+			window.showToast("¡Operación exitosa!", "success");
+			window.history.replaceState({}, "", window.location.pathname);
+		}
+	});
+</script>

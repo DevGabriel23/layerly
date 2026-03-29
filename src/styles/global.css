@@ -1,0 +1,10 @@
+/* src/styles/global.css */
+@import "tailwindcss";
+
+@theme {
+  --color-bg: var(--theme-bg);
+  --color-surface: var(--theme-surface);
+  --color-primary: var(--theme-primary);
+  --color-secondary: var(--theme-secondary);
+  --color-accent: var(--theme-accent);
+}

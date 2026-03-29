@@ -1,0 +1,27 @@
+{
+  "name": "demo_editor",
+  "type": "module",
+  "version": "0.0.1",
+  "engines": {
+    "node": ">=22.12.0"
+  },
+  "scripts": {
+    "dev": "astro dev",
+    "build": "astro build",
+    "preview": "astro preview",
+    "astro": "astro"
+  },
+  "dependencies": {
+    "@astrojs/vercel": "^10.0.3",
+    "@supabase/supabase-js": "^2.100.1",
+    "@tailwindcss/vite": "^4.2.2",
+    "astro": "^6.1.1",
+    "cloudinary": "^2.9.0",
+    "sortablejs": "^1.15.7",
+    "tailwindcss": "^4.2.2"
+  },
+  "devDependencies": {
+    "@types/sortablejs": "^1.15.9",
+    "supabase": "^2.84.4"
+  }
+}

@@ -1,0 +1,179 @@
+---
+const { layer } = Astro.props;
+---
+
+<section
+	class="layer-card bg-white/3 border border-white/5 rounded-4xl p-6 hover:bg-white/5 transition-all group/card relative mb-6"
+	data-layer-id={layer.id}
+	data-z={layer.z_order}
+	data-layer-name={layer.name}
+	data-support-hex={layer.support_hex ? "true" : "false"}
+>
+	<div
+		class="drag-handle absolute left-3 top-1/2 -translate-y-1/2 opacity-0 group-hover/card:opacity-100 cursor-grab active:cursor-grabbing p-2 text-white/20 hover:text-primary transition-all"
+	>
+		<svg
+			xmlns="http://www.w3.org/2000/svg"
+			width="20"
+			height="20"
+			viewBox="0 0 24 24"
+			fill="none"
+			stroke="currentColor"
+			stroke-width="2"
+			stroke-linecap="round"
+			stroke-linejoin="round"
+			><circle cx="9" cy="5" r="1"></circle><circle cx="9" cy="12" r="1"
+			></circle><circle cx="9" cy="19" r="1"></circle><circle
+				cx="15"
+				cy="5"
+				r="1"></circle><circle cx="15" cy="12" r="1"></circle><circle
+				cx="15"
+				cy="19"
+				r="1"></circle></svg
+		>
+	</div>
+
+	<header class="flex items-center justify-between mb-6 ml-6">
+		<div class="flex items-center gap-4">
+			<span
+				class="z-badge flex items-center justify-center w-10 h-10 rounded-2xl bg-slate-900 border border-white/10 text-primary font-black italic text-xs"
+			>
+				#{layer.z_order}
+			</span>
+			<h3 class="text-xl font-bold text-white tracking-wide">
+				{layer.name}
+			</h3>
+			<button
+				class="edit-layer-btn p-1.5 text-slate-500 hover:text-primary transition-colors"
+				data-name={layer.name}
+				data-hex={layer.support_hex}
+				data-id={layer.id}
+			>
+				<svg
+					xmlns="http://www.w3.org/2000/svg"
+					width="16"
+					height="16"
+					viewBox="0 0 24 24"
+					fill="none"
+					stroke="currentColor"
+					stroke-width="2"
+					><path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"
+					></path></svg
+				>
+			</button>
+		</div>
+
+		<div class="flex items-center gap-3">
+			<button
+				class="delete-layer-btn p-1.5 text-slate-500 hover:text-red-500 transition-all relative flex items-center justify-center"
+				title="Eliminar Capa"
+				data-layer-id={layer.id}
+				data-layer-name={layer.name}
+			>
+				<svg
+					class="w-5 h-5 icon-static"
+					xmlns="http://www.w3.org/2000/svg"
+					viewBox="0 0 24 24"
+					fill="none"
+					stroke="currentColor"
+					stroke-width="2"
+					stroke-linecap="round"
+					stroke-linejoin="round"
+				>
+					<path
+						d="M3 6h18m-2 0v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6m3 0V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"
+					></path>
+				</svg>
+
+				<div
+					class="loading-spinner w-5 h-5 hidden border-2 border-red-500 border-t-transparent rounded-full animate-spin absolute"
+				>
+				</div>
+			</button>
+			{
+				layer.support_hex && (
+					<div class="p-1.5 bg-slate-900 rounded-xl border border-white/10">
+						<input
+							type="color"
+							class="layer-color-picker w-8 h-8 bg-transparent cursor-pointer rounded-lg border-none"
+							value={
+								layer.default_hex
+									? `#${layer.default_hex}`
+									: "#ffffff"
+							}
+						/>
+					</div>
+				)
+			}
+			<label
+				class="flex items-center justify-center w-11 h-11 rounded-2xl bg-primary/20 text-primary border border-primary/30 cursor-pointer hover:scale-110 active:scale-95 transition-all"
+			>
+				<svg
+					xmlns="http://www.w3.org/2000/svg"
+					width="22"
+					height="22"
+					viewBox="0 0 24 24"
+					fill="none"
+					stroke="currentColor"
+					stroke-width="3"><path d="M12 5v14M5 12h14"></path></svg
+				>
+				<input
+					type="file"
+					class="hidden file-upload-input"
+					accept="image/png"
+				/>
+			</label>
+		</div>
+	</header>
+
+	<div class="grid grid-cols-4 sm:grid-cols-6 gap-3 ml-6">
+		<button
+			class="variant-item group aspect-square rounded-2xl border-2 border-dashed border-white/10 flex items-center justify-center hover:border-primary/40 transition-all"
+			data-url=""
+		>
+			<svg
+				class="w-6 h-6 text-white/20 group-hover:text-primary transition-colors"
+				fill="none"
+				viewBox="0 0 24 24"
+				stroke="currentColor"
+				><path
+					stroke-linecap="round"
+					stroke-linejoin="round"
+					stroke-width="3"
+					d="M6 18L18 6M6 6l12 12"></path></svg
+			>
+		</button>
+		{
+			layer.variants?.map((v: any) => (
+				<div class="relative group/variant">
+					<button
+						class="variant-item aspect-square rounded-2xl border-2 border-transparent overflow-hidden bg-slate-900 hover:scale-105 transition-all focus:border-primary focus:ring-4 focus:ring-primary/20"
+						data-url={v.url_proxy}
+						data-master={v.url_master}
+					>
+						<img
+							src={v.url_proxy}
+							class="w-full h-full object-cover pointer-events-none opacity-80 hover:opacity-100 transition-opacity"
+						/>
+					</button>
+					<button
+						class="delete-variant-btn absolute -top-2 -right-2 w-6 h-6 bg-red-500 text-white rounded-full opacity-0 group-hover/variant:opacity-100 transition-opacity flex items-center justify-center shadow-lg"
+						data-id={v.id}
+					>
+						<svg
+							xmlns="http://www.w3.org/2000/svg"
+							width="12"
+							height="12"
+							viewBox="0 0 24 24"
+							fill="none"
+							stroke="currentColor"
+							stroke-width="3"
+						>
+							<path d="M18 6 6 18M6 6l12 12" />
+						</svg>
+					</button>
+				</div>
+			))
+		}
+	</div>
+</section>

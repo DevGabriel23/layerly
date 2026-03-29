@@ -1,0 +1,413 @@
+---
+// src/pages/dashboard.astro
+import Layout from "../layouts/Layout.astro";
+---
+
+<Layout title="Dashboard de Proyectos | Picrew">
+	<!-- Pantalla de Carga Inicial -->
+	<div
+		id="loading"
+		class="text-secondary font-medium animate-pulse text-center w-full"
+	>
+		Cargando tu información...
+	</div>
+
+	<div
+		id="dashboard-content"
+		class="hidden w-full max-w-4xl p-4 sm:p-10 bg-surface rounded-2xl sm:rounded-3xl shadow-2xl border border-accent/50 relative overflow-hidden backdrop-blur-xl"
+	>
+		<!-- Decoraciones (Gradients Blur) -->
+		<div
+			class="absolute -top-32 -right-32 w-64 h-64 sm:w-96 sm:h-96 bg-secondary rounded-full mix-blend-screen filter blur-[80px] sm:blur-[100px] opacity-20 pointer-events-none"
+		>
+		</div>
+		<div
+			class="absolute -bottom-32 -left-32 w-64 h-64 sm:w-96 sm:h-96 bg-primary rounded-full mix-blend-screen filter blur-[80px] sm:blur-[100px] opacity-20 pointer-events-none"
+		>
+		</div>
+
+		<div class="relative z-10 w-full">
+			<!-- Encabezado y Saludo -->
+			<div
+				class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8 border-b border-accent/50 pb-6"
+			>
+				<div>
+					<h1
+						class="text-2xl sm:text-3xl font-extrabold tracking-tight bg-linear-to-r from-secondary to-primary bg-clip-text text-transparent"
+					>
+						Hola, <span id="user-display">Usuario</span>
+					</h1>
+					<p class="text-slate-400 mt-1 text-sm font-medium">
+						Gestiona tus proyectos
+					</p>
+				</div>
+				<button
+					id="logout-btn"
+					class="w-full sm:w-auto px-5 py-3 sm:py-2.5 rounded-xl text-sm font-semibold bg-accent/20 hover:bg-accent/40 border border-accent/70 text-slate-300 transition-colors shrink-0"
+				>
+					Cerrar Sesión
+				</button>
+			</div>
+
+			<!-- Sección de Proyectos -->
+			<div>
+				<div
+					class="flex flex-col sm:flex-row sm:items-center justify-between mb-6 gap-4"
+				>
+					<h2 class="text-xl font-bold text-white tracking-wide">
+						Mis Proyectos
+					</h2>
+					<button
+						id="new-project-btn"
+						class="w-full sm:w-auto px-5 py-3 sm:py-2 bg-linear-to-r from-primary to-secondary hover:brightness-110 text-white text-sm font-bold rounded-xl transition-all shadow-lg focus:ring-2 focus:ring-primary focus:outline-none"
+					>
+						+ Nuevo Proyecto
+					</button>
+				</div>
+
+				<!-- Estado de Carga (Skeletons) -->
+				<div
+					id="projects-skeleton"
+					class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-5"
+				>
+					<div
+						class="animate-pulse bg-slate-800/60 h-[160px] rounded-2xl border border-accent/30 hidden md:block"
+					>
+					</div>
+					<div
+						class="animate-pulse bg-slate-800/60 h-[160px] rounded-2xl border border-accent/30 hidden sm:block"
+					>
+					</div>
+					<div
+						class="animate-pulse bg-slate-800/60 h-[160px] rounded-2xl border border-accent/30"
+					>
+					</div>
+				</div>
+
+				<!-- Lista de Proyectos -->
+				<div
+					id="projects-grid"
+					class="hidden grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-5"
+				>
+					<!-- Se inyectan las tarjetas aquí -->
+				</div>
+
+				<!-- Estado Vacío -->
+				<div
+					id="empty-state"
+					class="hidden text-center py-12 px-4 border-2 border-dashed border-accent/40 rounded-3xl bg-slate-900/30"
+				>
+					<svg
+						class="mx-auto h-12 w-12 text-slate-500 mb-4"
+						fill="none"
+						viewBox="0 0 24 24"
+						stroke="currentColor"
+					>
+						<path
+							stroke-linecap="round"
+							stroke-linejoin="round"
+							stroke-width="1.5"
+							d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 002-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"
+						></path>
+					</svg>
+					<h3 class="text-lg font-medium text-slate-300">
+						Aún no tienes proyectos
+					</h3>
+					<p class="mt-1 text-sm text-slate-500 mb-6">
+						Dale rienda suelta a tu imaginación y crea el primero.
+					</p>
+					<button
+						id="empty-new-btn"
+						class="w-full sm:w-auto px-5 py-3 sm:py-2.5 bg-accent/30 hover:bg-accent/50 text-white text-sm font-medium rounded-xl transition-all border border-accent/60"
+					>
+						Empezar un Proyecto
+					</button>
+				</div>
+			</div>
+		</div>
+	</div>
+
+	<!-- Modal de Nuevo Proyecto -->
+	<dialog
+		id="new-project-modal"
+		class="bg-surface border border-accent/50 rounded-2xl shadow-2xl p-0 backdrop:bg-slate-950/80 backdrop:backdrop-blur-sm w-[90%] max-w-md m-auto text-white"
+	>
+		<div class="p-6">
+			<h3 class="text-xl font-bold mb-2">Crear Nuevo Proyecto</h3>
+			<p class="text-sm text-slate-400 mb-6">
+				Escribe un nombre genial para tu nuevo avatar.
+			</p>
+
+			<input
+				type="text"
+				id="project-name-input"
+				placeholder="Ej. Elfo Arquero..."
+				class="appearance-none block w-full px-5 py-3.5 bg-slate-900/50 border border-accent/50 rounded-xl shadow-inner placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary transition-all duration-300 mb-6"
+			/>
+
+			<div class="flex flex-col sm:flex-row gap-3 sm:justify-end mt-2">
+				<button
+					id="cancel-project-btn"
+					class="w-full sm:w-auto px-5 py-3 sm:py-2.5 rounded-xl text-sm font-semibold bg-accent/20 hover:bg-accent/40 text-slate-300 transition-colors border border-accent/50"
+					>Cancelar</button
+				>
+				<button
+					id="confirm-project-btn"
+					class="w-full sm:w-auto px-5 py-3 sm:py-2.5 rounded-xl text-sm font-bold bg-linear-to-r from-primary to-secondary hover:brightness-110 text-white transition-colors flex items-center justify-center border border-transparent"
+				>
+					<span id="btn-text">Crear Proyecto</span>
+					<svg
+						id="btn-spinner"
+						class="animate-spin ml-2 h-4 w-4 hidden"
+						xmlns="http://www.w3.org/2000/svg"
+						fill="none"
+						viewBox="0 0 24 24"
+						><circle
+							class="opacity-25"
+							cx="12"
+							cy="12"
+							r="10"
+							stroke="currentColor"
+							stroke-width="4"></circle><path
+							class="opacity-75"
+							fill="currentColor"
+							d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+						></path></svg
+					>
+				</button>
+			</div>
+		</div>
+	</dialog>
+</Layout>
+
+<script>
+	import { supabase } from "../lib/supabase";
+
+	document.addEventListener("DOMContentLoaded", async () => {
+		const loading = document.getElementById("loading");
+		const content = document.getElementById("dashboard-content");
+
+		const projectsSkeleton = document.getElementById("projects-skeleton");
+		const projectsGrid = document.getElementById("projects-grid");
+		const emptyState = document.getElementById("empty-state");
+
+		// Validar sesión activa
+		const {
+			data: { session },
+			error,
+		} = await supabase.auth.getSession();
+
+		if (error || !session) {
+			window.location.replace("/");
+			return;
+		}
+
+		// Rellenar cabecera con el saludo
+		const user = session.user;
+		const userDisplay = document.getElementById("user-display");
+		if (userDisplay) {
+			// Usa el nombre que haya antes del '@' del correo
+			userDisplay.textContent = user.email
+				? user.email.split("@")[0]
+				: "Usuario";
+		}
+
+		// Ocultar pantalla de carga del layout inicial y mostrar tablero
+		if (loading) loading.classList.add("hidden");
+		if (content) content.classList.remove("hidden");
+
+		// Rutina para cargar los proyectos desde Supabase
+		const loadProjects = async () => {
+			if (projectsSkeleton) projectsSkeleton.classList.remove("hidden");
+			if (projectsGrid) projectsGrid.classList.add("hidden");
+			if (emptyState) emptyState.classList.add("hidden");
+
+			const { data: projects, error: dbError } = await supabase
+				.from("avatar_config")
+				.select("*")
+				.eq("user_id", user.id)
+				.order("created_at", { ascending: false });
+
+			if (projectsSkeleton) projectsSkeleton.classList.add("hidden");
+
+			if (!projects || projects.length === 0) {
+				emptyState?.classList.remove("hidden");
+				return;
+			}
+
+			if (projectsGrid) {
+				projectsGrid.innerHTML = "";
+				projects.forEach((proj) => {
+					const date = new Date(proj.created_at).toLocaleDateString(
+						"es-ES",
+						{
+							year: "numeric",
+							month: "short",
+							day: "numeric",
+						},
+					);
+
+					const card = document.createElement("div");
+					card.className =
+						"group relative bg-slate-900/40 p-5 rounded-3xl border border-accent/40 hover:border-primary/50 transition-all flex flex-col justify-between min-h-[180px]";
+
+					card.innerHTML = `
+                <button class="delete-project-btn absolute top-5 right-5 p-2.5 text-slate-500 hover:text-red-500 hover:bg-red-500/10 rounded-xl opacity-0 group-hover:opacity-100 transition-all" data-id="${proj.id}" data-name="${proj.project_name}">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18m-2 0v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6m3 0V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"></path></svg>
+                </button>
+                <div>
+                    <h3 class="text-lg font-black text-white group-hover:text-primary transition-colors pr-10 italic uppercase">${proj.project_name}</h3>
+                    <p class="text-[10px] font-bold text-slate-500 mt-2 uppercase tracking-widest">${date}</p>
+                </div>
+                <div class="mt-6">
+                    <a href="/editor/${proj.id}" class="w-full inline-flex items-center justify-center py-3 px-4 rounded-xl bg-white/5 border border-white/10 text-sm font-bold text-secondary hover:bg-primary hover:text-white transition-all">
+                        ABRIR EDITOR
+                    </a>
+                </div>
+            `;
+
+					// Listener de borrado para cada tarjeta
+					card.querySelector(".delete-project-btn")?.addEventListener(
+						"click",
+						async (e) => {
+							const btn = e.currentTarget as HTMLElement;
+							const { id, name } = btn.dataset;
+
+							if (
+								!confirm(
+									`¿Eliminar "${name}"? Se borrarán todos los assets de Cloudinary.`,
+								)
+							)
+								return;
+
+							window.showToast("Limpiando proyecto...", "info");
+							btn.innerHTML =
+								'<div class="w-4 h-4 border-2 border-red-500 border-t-transparent rounded-full animate-spin"></div>';
+
+							const res = await fetch("/api/delete-project", {
+								method: "POST",
+								body: JSON.stringify({ projectId: id }),
+								headers: { "Content-Type": "application/json" },
+							});
+
+							if (res.ok) {
+								window.showToast(
+									"Proyecto eliminado",
+									"success",
+								);
+								loadProjects(); // Recarga la lista sin refrescar la página
+							} else {
+								window.showToast("Error al borrar", "error");
+								loadProjects();
+							}
+						},
+					);
+
+					projectsGrid.appendChild(card);
+				});
+				projectsGrid.classList.remove("hidden");
+			}
+		};
+
+		// LLama a pintar interfaz
+		await loadProjects();
+
+		// Lógica del Modal para "+ Nuevo Proyecto"
+		const modal = document.getElementById(
+			"new-project-modal",
+		) as HTMLDialogElement;
+		const nameInput = document.getElementById(
+			"project-name-input",
+		) as HTMLInputElement;
+		const cancelBtn = document.getElementById("cancel-project-btn");
+		const confirmBtn = document.getElementById("confirm-project-btn");
+		const btnText = document.getElementById("btn-text");
+		const btnSpinner = document.getElementById("btn-spinner");
+
+		const openModal = () => {
+			if (nameInput) nameInput.value = "";
+			if (modal) modal.showModal();
+		};
+
+		const closeModal = () => {
+			if (modal) modal.close();
+		};
+
+		const executeCreateProject = async () => {
+			if (!nameInput) return;
+			const name = nameInput.value;
+			if (!name || name.trim() === "") {
+				nameInput.focus();
+				return;
+			}
+
+			// UI loading state
+			if (btnText) btnText.textContent = "Creando...";
+			if (btnSpinner) btnSpinner.classList.remove("hidden");
+			if (confirmBtn) confirmBtn.setAttribute("disabled", "true");
+
+			// Hacer un Insert y retornar la row ingresada para obtener el ID
+			const { data, error: insertError } = await supabase
+				.from("avatar_config")
+				.insert([
+					{
+						project_name: name.trim(),
+						user_id: user.id,
+					},
+				])
+				.select()
+				.single();
+
+			if (insertError) {
+				alert("Hubo un error al crear el proyecto. Revisa la consola.");
+				console.error("Insert Error:", insertError);
+
+				// Restaurar boton
+				if (btnText) btnText.textContent = "Crear Proyecto";
+				if (btnSpinner) btnSpinner.classList.add("hidden");
+				if (confirmBtn) confirmBtn.removeAttribute("disabled");
+			} else if (data) {
+				// Redirigir al generador Picrew editor enviando el ID por el parametro de ruta
+				window.location.href = `/editor/${data.id}`;
+			}
+		};
+
+		// Añadir bindings del modal
+		document
+			.getElementById("new-project-btn")
+			?.addEventListener("click", openModal);
+		document
+			.getElementById("empty-new-btn")
+			?.addEventListener("click", openModal);
+
+		cancelBtn?.addEventListener("click", closeModal);
+		confirmBtn?.addEventListener("click", executeCreateProject);
+		nameInput?.addEventListener("keydown", (e) => {
+			if (e.key === "Enter") executeCreateProject();
+		});
+	});
+
+	// Bind de Cerrar Sesion
+	document
+		.getElementById("logout-btn")
+		?.addEventListener("click", async () => {
+			// 1. Cerrar sesión en Supabase
+			await supabase.auth.signOut();
+
+			// 2. Borrar cookies manualmente (poniendo una fecha pasada)
+			document.cookie =
+				"sb-access-token=; path=/; expires=Thu, 01 Jan 1970 00:00:00 UTC;";
+			document.cookie =
+				"sb-refresh-token=; path=/; expires=Thu, 01 Jan 1970 00:00:00 UTC;";
+
+			// 3. Redirigir
+			window.location.href = "/";
+		});
+
+	// Escuchar deslogueos remotos
+	supabase.auth.onAuthStateChange((event, session) => {
+		if (event === "SIGNED_OUT" || !session) {
+			window.location.replace("/");
+		}
+	});
+</script>

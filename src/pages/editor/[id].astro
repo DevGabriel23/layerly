@@ -1,0 +1,687 @@
+---
+import Layout from "../../layouts/Layout.astro";
+import LayerCard from "../../components/editor/LayerCard.astro";
+import { createSupabaseServer } from "../../lib/supabase";
+
+const { id } = Astro.params;
+const user = Astro.locals.user;
+const token = Astro.locals.token;
+
+if (!user || !token) return Astro.redirect("/");
+
+const supabase = createSupabaseServer(token);
+
+const { data: project } = await supabase
+	.from("avatar_config")
+	.select("*")
+	.eq("id", id as string)
+	.maybeSingle();
+if (!project) return Astro.redirect("/dashboard?error=not_found");
+
+const { data: layers } = await supabase
+	.from("layers")
+	.select("*, variants(*)")
+	.eq("project_id", id as string)
+	.order("z_order", { ascending: false });
+
+const sortedLayers = layers || [];
+---
+
+<Layout title={`Editor: ${project.project_name}`}>
+	<main
+		id="editor-root"
+		data-project-id={id}
+		class="w-full max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-12 gap-8 p-4 sm:p-8 h-screen overflow-hidden"
+	>
+		<div class="lg:col-span-5 flex flex-col gap-6 h-full">
+			<div
+				class="relative aspect-square bg-slate-950 border border-white/10 rounded-4xl overflow-hidden shadow-2xl"
+			>
+				<div
+					id="canvas-container"
+					class="w-full h-full relative flex items-center justify-center"
+				>
+					<p
+						id="canvas-placeholder"
+						class="text-slate-600 font-bold uppercase tracking-widest text-xs animate-pulse"
+					>
+						Selecciona variantes
+					</p>
+				</div>
+			</div>
+			<div class="bg-white/5 border border-white/10 p-6 rounded-3xl">
+				<h1 class="text-2xl font-black text-white italic uppercase">
+					{project.project_name}
+				</h1>
+				<button
+					id="export-btn"
+					disabled
+					data-project-name={project.project_name}
+					class="mt-4 w-full py-4 bg-linear-to-r from-primary to-secondary text-white font-black uppercase tracking-widest rounded-2xl transition-all hover:scale-[1.02] active:scale-95 disabled:opacity-30 disabled:cursor-not-allowed disabled:hover:scale-100 disabled:grayscale"
+				>
+					Exportar {project.project_name}.png
+				</button>
+			</div>
+		</div>
+
+		<div class="lg:col-span-7 flex flex-col h-full overflow-hidden">
+			<div
+				class="flex items-center justify-between border-b border-white/5 pb-4"
+			>
+				<a
+					href="/dashboard"
+					class="p-2 text-slate-500 hover:text-white transition-colors"
+				>
+					<svg
+						xmlns="http://www.w3.org/2000/svg"
+						width="24"
+						height="24"
+						viewBox="0 0 24 24"
+						fill="none"
+						stroke="currentColor"
+						stroke-width="2"
+						stroke-linecap="round"
+						stroke-linejoin="round"
+						><path d="m15 18-6-6 6-6"></path></svg
+					>
+				</a>
+				<h2
+					class="text-2xl font-bold text-white italic uppercase tracking-tight"
+				>
+					Capas
+				</h2>
+				<button
+					id="open-modal-btn"
+					class="px-5 py-2.5 bg-primary rounded-2xl text-xs font-black uppercase text-white hover:scale-105 transition-all"
+				>
+					+ Nueva Capa
+				</button>
+			</div>
+
+			<div
+				id="layers-list"
+				class="flex-1 overflow-y-auto mt-6 pr-2 custom-scrollbar"
+			>
+				{sortedLayers.map((layer) => <LayerCard layer={layer} />)}
+			</div>
+		</div>
+	</main>
+
+	<dialog
+		id="new-layer-modal"
+		class="bg-transparent backdrop:backdrop-blur-md p-0 m-auto outline-none"
+	>
+		<div
+			class="bg-slate-900 border border-white/10 rounded-[2.5rem] p-8 w-[400px] shadow-2xl"
+		>
+			<h3 class="text-2xl font-black text-white italic uppercase mb-6">
+				Nueva Capa
+			</h3>
+			<div class="space-y-4">
+				<input
+					type="text"
+					id="layer-name-input"
+					placeholder="Nombre (ej: Cabello)"
+					class="w-full bg-white/5 border border-white/10 rounded-2xl px-5 py-4 text-white outline-none focus:border-primary"
+				/>
+				<label class="flex items-center gap-3 cursor-pointer p-2">
+					<input
+						type="checkbox"
+						id="layer-hex-check"
+						class="w-5 h-5 rounded bg-white/5 border-white/10 text-primary"
+					/>
+					<span class="text-sm font-bold text-slate-400"
+						>¿Soporta colores?</span
+					>
+				</label>
+			</div>
+			<div class="flex gap-3 mt-8">
+				<button
+					id="close-modal-btn"
+					class="flex-1 py-4 text-slate-500 font-black text-xs uppercase"
+					>Cancelar</button
+				>
+				<button
+					id="confirm-layer-btn"
+					class="flex-1 py-4 bg-primary text-white rounded-2xl font-black text-xs uppercase"
+					>Crear</button
+				>
+			</div>
+		</div>
+	</dialog>
+</Layout>
+
+<script>
+	import { supabase } from "../../lib/supabase";
+	import Sortable from "sortablejs";
+
+	interface LayerState {
+		url: string | null;
+		urlMaster: string | null;
+		color: string;
+		z: number;
+		supportHex: boolean;
+	}
+
+	document.addEventListener("DOMContentLoaded", () => {
+		const state: Record<string, LayerState> = {};
+		const canvas = document.getElementById("canvas-container");
+		const placeholder = document.getElementById("canvas-placeholder");
+		const list = document.getElementById("layers-list");
+		const modal = document.getElementById(
+			"new-layer-modal",
+		) as HTMLDialogElement;
+		const projectId =
+			document.getElementById("editor-root")?.dataset.projectId;
+
+		if (!projectId) {
+			console.error("No se encontró el ID del proyecto");
+			return;
+		}
+
+		function updateCanvas() {
+			if (!canvas) return;
+
+			canvas
+				.querySelectorAll(".layer-render")
+				.forEach((el) => el.remove());
+
+			const activeLayers = Object.entries(state)
+				.filter(([_, data]) => data.url !== null)
+				.sort((a, b) => a[1].z - b[1].z);
+
+			const layersToRender = Object.entries(state)
+				.filter(([_, data]) => {
+					return data.url !== null || (data.supportHex && data.color);
+				})
+				.sort((a, b) => a[1].z - b[1].z);
+			if (layersToRender.length > 0) placeholder?.classList.add("hidden");
+			else placeholder?.classList.remove("hidden");
+
+			const exportBtn = document.getElementById(
+				"export-btn",
+			) as HTMLButtonElement;
+			if (exportBtn) {
+				exportBtn.disabled = activeLayers.length === 0;
+			}
+
+			layersToRender.forEach(([id, data]) => {
+				const div = document.createElement("div");
+				div.className =
+					"layer-render absolute inset-0 w-full h-full pointer-events-none transition-all duration-300";
+				div.style.zIndex = data.z.toString();
+				div.dataset.layerId = id;
+				div.style.isolation = "isolate";
+
+				if (data.url) {
+					if (data.supportHex) {
+						// 1. Capa del Color Sólido (Abajo)
+						const colorLayer = document.createElement("div");
+						colorLayer.className = "absolute inset-0 w-full h-full";
+						colorLayer.style.backgroundColor = data.color;
+
+						// 2. Capa de la Textura/Imagen (Arriba)
+						const textureLayer = document.createElement("div");
+						textureLayer.className =
+							"absolute inset-0 w-full h-full";
+						textureLayer.style.backgroundImage = `url('${data.url}')`;
+						textureLayer.style.backgroundSize = "contain";
+						textureLayer.style.backgroundRepeat = "no-repeat";
+						textureLayer.style.backgroundPosition = "center";
+
+						// Aquí aplicamos el filtro SOLO a la imagen, no al color
+						textureLayer.style.filter =
+							"grayscale(1) contrast(1.2) brightness(1.1)";
+						// 'multiply' hace que las sombras de la imagen oscurezcan el color de abajo
+						textureLayer.style.mixBlendMode = "multiply";
+
+						div.appendChild(colorLayer);
+						div.appendChild(textureLayer);
+
+						// 3. Máscara al contenedor padre (div) para recortar ambos
+						div.style.maskImage =
+							div.style.webkitMaskImage = `url('${data.url}')`;
+						div.style.maskSize = "contain";
+						div.style.maskRepeat = "no-repeat";
+						div.style.maskPosition = "center";
+					} else {
+						const img = document.createElement("img");
+						img.src = data.url;
+						img.className = "w-full h-full object-contain";
+						div.appendChild(img);
+					}
+				} else if (data.supportHex && data.color) {
+					div.style.backgroundColor = data.color;
+				}
+
+				canvas?.appendChild(div);
+			});
+		}
+
+		// --- Init Capas ---
+		document.querySelectorAll(".layer-card").forEach((card) => {
+			const el = card as HTMLElement;
+			const id = el.dataset.layerId!;
+			const cp = el.querySelector(
+				".layer-color-picker",
+			) as HTMLInputElement;
+
+			state[id] = {
+				url: null,
+				urlMaster: null, // Inicialmente vacío
+				color: cp?.value || "#ffffff",
+				z: parseInt(el.dataset.z!),
+				supportHex: el.dataset.supportHex === "true",
+			};
+
+			el.querySelectorAll(".variant-item").forEach((btn) => {
+				btn.addEventListener("click", () => {
+					el.querySelectorAll(".variant-item").forEach((b) =>
+						b.classList.remove("ring-4", "border-primary"),
+					);
+
+					const btnEl = btn as HTMLElement;
+					const urlProxy = btnEl.dataset.url;
+					const urlMaster = btnEl.dataset.master;
+
+					if (urlProxy) {
+						btnEl.classList.add("ring-4", "border-primary");
+						state[id].url = urlProxy;
+						state[id].urlMaster = urlMaster || urlProxy;
+					} else {
+						// Es el botón de "X" (Deseleccionar)
+						state[id].url = null;
+						state[id].urlMaster = null;
+					}
+					updateCanvas();
+				});
+			});
+
+			cp?.addEventListener("input", (e) => {
+				state[id].color = (e.target as HTMLInputElement).value;
+				updateCanvas();
+			});
+
+			el.querySelector(".file-upload-input")?.addEventListener(
+				"change",
+				async (e: any) => {
+					const file = e.target.files[0];
+					if (!file) return;
+
+					window.showToast("Procesando y optimizando...", "info");
+
+					const processImages = (
+						file: File,
+					): Promise<{ master: Blob; proxy: Blob }> => {
+						return new Promise((resolve) => {
+							const img = new Image();
+							img.src = URL.createObjectURL(file);
+							img.onload = () => {
+								const size = Math.max(img.width, img.height);
+								const canvas = document.createElement("canvas");
+								const ctx = canvas.getContext("2d")!;
+
+								// Master: PNG Cuadrado Alta Res
+								canvas.width = canvas.height = size;
+								ctx.drawImage(
+									img,
+									(size - img.width) / 2,
+									(size - img.height) / 2,
+								);
+
+								canvas.toBlob((masterBlob) => {
+									// Proxy: WebP 500px para el editor
+									const pCanvas =
+										document.createElement("canvas");
+									pCanvas.width = pCanvas.height = 500;
+									const pCtx = pCanvas.getContext("2d")!;
+									pCtx.drawImage(canvas, 0, 0, 500, 500);
+
+									pCanvas.toBlob(
+										(proxyBlob) => {
+											resolve({
+												master: masterBlob!,
+												proxy: proxyBlob!,
+											});
+										},
+										"image/webp",
+										0.8,
+									);
+								}, "image/png");
+							};
+						});
+					};
+
+					try {
+						const { master, proxy } = await processImages(file);
+						const fd = new FormData();
+						fd.append("file_master", master, "master.png");
+						fd.append("file_proxy", proxy, "proxy.webp");
+						fd.append("layerId", id);
+
+						const res = await fetch("/api/upload-variant", {
+							method: "POST",
+							body: fd,
+						});
+
+						if (res.ok) {
+							window.showToast("¡Variante subida!", "success");
+							window.location.reload();
+						} else {
+							throw new Error("Error en el servidor");
+						}
+					} catch (err) {
+						window.showToast("Error al subir imagen", "error");
+					}
+				},
+			);
+		});
+
+		// --- Drag & Drop ---
+		if (list) {
+			Sortable.create(list, {
+				handle: ".drag-handle",
+				animation: 150,
+				onEnd: async () => {
+					window.showToast("Sincronizando...", "info");
+
+					const listContainer =
+						document.getElementById("layers-list");
+					if (!listContainer) return;
+
+					const cards = Array.from(
+						listContainer.children,
+					) as HTMLElement[];
+
+					const updates = cards.map((card, index) => {
+						const id = card.dataset.layerId;
+						const name = card.dataset.layerName;
+						const newZ = (cards.length - 1 - index) * 10;
+
+						if (state[id!]) {
+							state[id!].z = newZ;
+						}
+
+						const badge = card.querySelector(".z-badge");
+						if (badge) badge.textContent = `#${newZ}`;
+						card.dataset.z = newZ.toString();
+
+						return {
+							id: id,
+							name: name,
+							new_z: newZ,
+						};
+					});
+
+					updateCanvas();
+
+					console.log("Enviando actualizaciones:", updates);
+
+					const { error } = await supabase.rpc(
+						"update_layers_order",
+						{
+							layer_updates: updates,
+						},
+					);
+
+					if (error) {
+						window.showToast("Error al guardar orden", "error");
+						console.error(error);
+					} else {
+						window.showToast("Orden actualizado", "success");
+					}
+				},
+			});
+		}
+
+		// --- Create layer ---
+		const createLayer = async () => {
+			const name = (
+				document.getElementById("layer-name-input") as HTMLInputElement
+			).value;
+			const hex = (
+				document.getElementById("layer-hex-check") as HTMLInputElement
+			).checked;
+			if (!name) return window.showToast("Nombre requerido", "error");
+
+			const { error } = await supabase.from("layers").insert({
+				project_id: projectId,
+				name,
+				support_hex: hex,
+				z_order: Object.keys(state).length * 10,
+			});
+			if (!error) window.location.reload();
+		};
+
+		// --- Edit layer ---
+		document.querySelectorAll(".edit-layer-btn").forEach((btn) => {
+			btn.addEventListener("click", async () => {
+				const { id, name, hex } = (btn as HTMLElement).dataset;
+				const newName = prompt("Nuevo nombre de la capa:", name);
+				if (newName === null) return;
+
+				const { error } = await supabase
+					.from("layers")
+					.update({ name: newName })
+					.eq("id", id!);
+
+				if (!error) window.location.reload();
+			});
+		});
+
+		// --- Modal ---
+		document
+			.getElementById("open-modal-btn")
+			?.addEventListener("click", () => modal.showModal());
+		document
+			.getElementById("close-modal-btn")
+			?.addEventListener("click", () => modal.close());
+		document
+			.getElementById("confirm-layer-btn")
+			?.addEventListener("click", async () => createLayer());
+
+		// --- Export ---
+		document
+			.getElementById("export-btn")
+			?.addEventListener("click", async () => {
+				const btn = document.getElementById(
+					"export-btn",
+				) as HTMLButtonElement;
+				const projectName = btn.dataset.projectName;
+				window.showToast("Generando archivo...", "info");
+
+				const layersToExport = Object.entries(state)
+					.filter(
+						([_, data]) =>
+							data.url || (data.supportHex && data.color),
+					)
+					.sort((a, b) => a[1].z - b[1].z);
+
+				if (layersToExport.length === 0) {
+					window.showToast("No hay nada que exportar", "error");
+					return;
+				}
+
+				try {
+					// 2. Cargar imágenes con CrossOrigin
+					const loadImg = (
+						url: string,
+					): Promise<HTMLImageElement> => {
+						return new Promise((resolve, reject) => {
+							const img = new Image();
+							img.crossOrigin = "anonymous";
+							img.src = url;
+							img.onload = () => resolve(img);
+							img.onerror = reject;
+						});
+					};
+
+					let maxW = 1000;
+					let maxH = 1000;
+
+					const loadedLayers = await Promise.all(
+						layersToExport.map(async ([id, data]) => {
+							if (data.urlMaster) {
+								const img = await loadImg(data.urlMaster);
+								maxW = Math.max(maxW, img.width);
+								maxH = Math.max(maxH, img.height);
+								return { id, data, img };
+							}
+							return { id, data, img: null };
+						}),
+					);
+
+					const cv = document.createElement("canvas");
+					cv.width = maxW;
+					cv.height = maxH;
+					const ctx = cv.getContext("2d")!;
+
+					// 3. Dibujar secuencialmente
+					for (const { data, img } of loadedLayers) {
+						if (img) {
+							if (data.supportHex) {
+								const tempCv = document.createElement("canvas");
+								tempCv.width = maxW;
+								tempCv.height = maxH;
+								const tCtx = tempCv.getContext("2d")!;
+
+								tCtx.fillStyle = data.color;
+								tCtx.fillRect(0, 0, maxW, maxH);
+
+								tCtx.globalCompositeOperation = "multiply";
+								tCtx.filter =
+									"grayscale(100%) contrast(120%) brightness(110%)";
+								tCtx.drawImage(img, 0, 0, maxW, maxH);
+
+								const maskCv = document.createElement("canvas");
+								maskCv.width = maxW;
+								maskCv.height = maxH;
+								const mCtx = maskCv.getContext("2d")!;
+								mCtx.drawImage(img, 0, 0, maxW, maxH);
+
+								tCtx.globalCompositeOperation =
+									"destination-in";
+								tCtx.filter = "none";
+								tCtx.drawImage(maskCv, 0, 0);
+
+								ctx.drawImage(tempCv, 0, 0);
+							} else {
+								ctx.drawImage(img, 0, 0, maxW, maxH);
+							}
+						} else if (data.supportHex && data.color) {
+							ctx.fillStyle = data.color;
+							ctx.fillRect(0, 0, maxW, maxH);
+						}
+					}
+
+					// 4. Descargar
+					const a = document.createElement("a");
+					a.download = `${projectName}-${Date.now()}.png`;
+					a.href = cv.toDataURL("image/png");
+					a.click();
+					window.showToast(
+						`${projectName} exportado con éxito!`,
+						"success",
+					);
+				} catch (err) {
+					console.error(err);
+					window.showToast(
+						"Error de CORS: Verifica los permisos de Cloudinary",
+						"error",
+					);
+				}
+			});
+		// -- Delete layer --
+		document.querySelectorAll(".delete-layer-btn").forEach((btn) => {
+			btn.addEventListener("click", async () => {
+				const button = btn as HTMLButtonElement;
+				const id = button.dataset.layerId;
+				const name = button.dataset.layerName || "esta capa";
+
+				if (
+					!confirm(
+						`¿Estás seguro de eliminar "${name}"? Se borrarán todas sus imágenes permanentemente.`,
+					)
+				)
+					return;
+
+				button.disabled = true;
+				button.classList.add("opacity-50", "cursor-not-allowed");
+				button.querySelector(".icon-static")?.classList.add("hidden");
+				button
+					.querySelector(".loading-spinner")
+					?.classList.remove("hidden");
+
+				window.showToast("Eliminando capa y archivos...", "info");
+
+				try {
+					const res = await fetch("/api/delete-layer", {
+						method: "POST",
+						body: JSON.stringify({ layerId: id }),
+						headers: { "Content-Type": "application/json" },
+					});
+
+					if (res.ok) {
+						window.showToast("Capa eliminada con éxito", "success");
+						window.location.reload();
+					} else {
+						const errorData = await res.json();
+						throw new Error(errorData.error || "Error al eliminar");
+					}
+				} catch (err: any) {
+					window.showToast(err.message, "error");
+					console.error(err);
+					button.disabled = false;
+					button.classList.remove("opacity-50", "cursor-not-allowed");
+					button
+						.querySelector(".icon-static")
+						?.classList.remove("hidden");
+					button
+						.querySelector(".loading-spinner")
+						?.classList.add("hidden");
+				}
+			});
+		});
+
+		// --- Delete variant ---
+		document.querySelectorAll(".delete-variant-btn").forEach((btn) => {
+			btn.addEventListener("click", async (e) => {
+				e.stopPropagation();
+				const button = btn as HTMLButtonElement;
+				const id = button.dataset.id;
+
+				if (!confirm("¿Eliminar variante?")) return;
+
+				button.innerHTML =
+					'<div class="w-3 h-3 border-2 border-white border-t-transparent rounded-full animate-spin"></div>';
+				button.disabled = true;
+
+				window.showToast("Eliminando...", "info");
+				const res = await fetch("/api/delete-variant", {
+					method: "POST",
+					body: JSON.stringify({ variantId: id }),
+					headers: { "Content-Type": "application/json" },
+				});
+
+				if (res.ok) window.location.reload();
+				else window.showToast("Error al eliminar", "error");
+			});
+		});
+	});
+</script>
+
+<style is:global>
+	.custom-scrollbar::-webkit-scrollbar {
+		width: 6px;
+	}
+	.custom-scrollbar::-webkit-scrollbar-track {
+		background: transparent;
+	}
+	.custom-scrollbar::-webkit-scrollbar-thumb {
+		background: rgba(255, 255, 255, 0.1);
+		border-radius: 10px;
+	}
+	.custom-scrollbar::-webkit-scrollbar-thumb:hover {
+		background: #c434f3;
+	}
+</style>
