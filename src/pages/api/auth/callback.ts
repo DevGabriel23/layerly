@@ -1,18 +1,23 @@
 // src/pages/api/auth/callback.ts
 import type { APIRoute } from "astro";
-import { supabase } from "../../../lib/supabase";
+import { createSupabaseSSR } from "../../../lib/supabase";
 
-export const GET: APIRoute = async ({ url, cookies, redirect }) => {
-  const code = url.searchParams.get("code");
+export const GET: APIRoute = async (context) => {
+	const code = context.url.searchParams.get("code");
+  const next = context.url.searchParams.get("next") ?? "/dashboard";
+
+  console.log("code", code);
+  console.log("next", next);
 
   if (code) {
-    const { data, error } = await supabase.auth.exchangeCodeForSession(code);
-    if (!error && data.session) {
-      const { access_token, refresh_token } = data.session;
-      cookies.set("sb-access-token", access_token, { path: "/" });
-      cookies.set("sb-refresh-token", refresh_token, { path: "/" });
+    const supabase = createSupabaseSSR(context);
+    const { error } = await supabase.auth.exchangeCodeForSession(code);
+    console.log("error", error);
+
+    if (!error) {
+      return context.redirect(next);
     }
   }
 
-  return redirect("/dashboard");
+  return context.redirect("/?error=auth_failed");
 };

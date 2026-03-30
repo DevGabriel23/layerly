@@ -2,13 +2,6 @@
 // src/pages/index.astro
 import DiscordIcon from "../components/icons/DiscordIcon.astro";
 import Layout from "../layouts/Layout.astro";
-import { supabase } from "../lib/supabase";
-
-const {
-	data: { user },
-} = await supabase.auth.getUser();
-
-if (user) return Astro.redirect("/dashboard");
 ---
 
 <Layout title="Layerly | Bienvenido">

@@ -1,33 +1,42 @@
 // src/middleware.ts
-
 import { defineMiddleware } from "astro:middleware";
-import { createSupabaseServer } from "./lib/supabase";
+import { createSupabaseSSR } from "./lib/supabase";
 
-export const onRequest = defineMiddleware(async ({ locals, url, redirect, cookies }, next) => {
-  const accessToken = cookies.get("sb-access-token")?.value;
-  const refreshToken = cookies.get("sb-refresh-token")?.value;
+export const onRequest = defineMiddleware(async (context, next) => {
+	const supabase = createSupabaseSSR(context);
 
-  const isProtectedRoute = url.pathname.startsWith("/dashboard") || url.pathname.startsWith("/editor");
+	// 1. Validamos al usuario una sola vez en el servidor
+	const {
+		data: { user },
+	} = await supabase.auth.getUser();
 
-  if (isProtectedRoute) {
-    if (!accessToken || !refreshToken) return redirect("/");
+	// Guardamos al usuario en locals para usarlo en las páginas .astro sin re-consultar
+	context.locals.user = user;
 
-    const supabase = createSupabaseServer();
-    const { data, error } = await supabase.auth.setSession({
-      access_token: accessToken,
-      refresh_token: refreshToken,
-    });
+	const pathname = context.url.pathname;
+	const searchParams = context.url.searchParams;
+	const isDashboard = pathname.startsWith("/dashboard");
+	const isEditor = pathname.startsWith("/editor");
+	const isHome = pathname === "/";
 
-    if (error || !data.session) {
-      cookies.delete("sb-access-token", { path: "/" });
-      cookies.delete("sb-refresh-token", { path: "/" });
-      return redirect("/");
-    }
+	const isPublicParam = searchParams.get("view") === "public";
 
-    // Inyectamos el usuario y el token en locals
-    locals.user = data.session.user;
-    locals.token = data.session.access_token;
-  }
+	if (isEditor && !user) {
+		if (!isPublicParam) {
+			const publicUrl = new URL(context.url);
+			publicUrl.searchParams.set("view", "public");
 
-  return next();
+			return context.redirect(publicUrl.toString());
+		}
+	}
+
+	if (isDashboard && !user) {
+		return context.redirect("/");
+	}
+
+	if (isHome && user) {
+		return context.redirect("/dashboard");
+	}
+
+	return next();
 });
