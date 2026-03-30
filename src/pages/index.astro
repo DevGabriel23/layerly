@@ -8,7 +8,7 @@ const {
 	data: { user },
 } = await supabase.auth.getUser();
 
-if (user) return redirect("/dashboard");
+if (user) return Astro.redirect("/dashboard");
 ---
 
 <Layout title="Layerly | Bienvenido">
