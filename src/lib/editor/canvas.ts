@@ -64,9 +64,10 @@ export function updateCanvas(
 				img.className = "w-full h-full object-contain";
 				div.appendChild(img);
 			}
-		} else if (data.supportHex && data.color) {
-			div.style.backgroundColor = data.color;
 		}
+		/* else if (data.supportHex && data.color) {
+			div.style.backgroundColor = data.color;
+		} */
 		canvas.appendChild(div);
 	});
 }

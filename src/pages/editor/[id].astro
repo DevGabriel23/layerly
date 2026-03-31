@@ -142,7 +142,9 @@ console.log("canEditLayers", canEditLayers);
 		</div>
 
 		<!-- Right Side -->
-		<div class="lg:col-span-7 flex-col p-4 lg:p-0 hidden lg:flex">
+		<div
+			class="lg:col-span-7 flex flex-col h-screen lg:h-[calc(100vh-4rem)] sticky top-20"
+		>
 			<header
 				class="flex flex-col lg:flex-row items-center justify-between border-b-4 border-border/20 pb-6 mb-6"
 			>
@@ -190,7 +192,10 @@ console.log("canEditLayers", canEditLayers);
 				}
 			</header>
 			<!-- Layers List Desktop -->
-			<div id="layers-list" class="space-y-6 pb-32">
+			<div
+				id="layers-list"
+				class="flex-1 overflow-y-auto pr-2 custom-scrollbar space-y-6 pb-32"
+			>
 				{
 					sortedLayers.length > 0 ? (
 						sortedLayers.map((layer) => (
