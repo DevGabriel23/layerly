@@ -33,7 +33,7 @@ const { data: layers } = await supabase
 	.from("layers")
 	.select("*, variants(*)")
 	.eq("project_id", id as string)
-	.order("z_order", { ascending: false });
+	.order("z_order", { ascending: true });
 
 const sortedLayers = layers || [];
 
@@ -535,7 +535,7 @@ console.log("canEditLayers", canEditLayers);
 					const updates = cards.map((card, index) => {
 						const id = card.dataset.layerId;
 						const name = card.dataset.layerName;
-						const newZ = (cards.length - 1 - index) * 10;
+						const newZ = (index + 1) * 10;
 
 						if (state[id!]) {
 							state[id!].z = newZ;
