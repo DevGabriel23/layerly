@@ -34,8 +34,24 @@ export const Theme = {
 		<title>{title}</title>
 	</head>
 	<body
-		class="bg-bg text-text flex flex-col items-center justify-center p-4 sm:p-8 transition-colors duration-500 font-quicksand min-h-screen"
+		class="bg-bg text-text flex flex-col items-center justify-center p-0 sm:p-8 transition-colors duration-500 font-quicksand min-h-screen"
 	>
+		<!-- Header Floating Button -->
+		<div class="fixed top-12 left-12 lg:top-6 lg:left-8 z-50">
+			<a href="/" class="flex items-center gap-3 group">
+				<div
+					class="w-10 h-10 bg-white border-2 border-border/40 rounded-xl flex items-center justify-center shadow-sm group-hover:border-primary/50 transition-all"
+				>
+					<span class="text-xl">✨</span>
+				</div>
+				<span
+					class="text-lg font-black text-heading italic uppercase tracking-tighter opacity-0 group-hover:opacity-100 transition-opacity"
+				>
+					Layerly
+				</span>
+			</a>
+		</div>
+
 		<div
 			class="fixed inset-0 pointer-events-none opacity-20 overflow-hidden"
 		>

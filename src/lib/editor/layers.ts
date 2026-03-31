@@ -143,12 +143,15 @@ export async function createLayer(
 
 export function toggleSheet(elements: EditorElements) {
 	const { sheet, overlay } = elements;
-	const isClosed = sheet?.classList.contains("translate-y-[calc(100%-60px)]");
+	const isClosed = sheet?.classList.contains("translate-y-[calc(100%)]");
+	console.log("isClosed", isClosed);
 	if (isClosed) {
-		sheet?.classList.remove("translate-y-[calc(100%-60px)]");
+		sheet?.classList.remove("translate-y-[calc(100%)]");
 		overlay?.classList.add("opacity-100", "pointer-events-auto");
+		overlay?.classList.remove("pointer-events-none");
 	} else {
-		sheet?.classList.add("translate-y-[calc(100%-60px)]");
+		sheet?.classList.add("translate-y-[calc(100%)]");
 		overlay?.classList.remove("opacity-100", "pointer-events-auto");
+		overlay?.classList.add("pointer-events-none");
 	}
 }

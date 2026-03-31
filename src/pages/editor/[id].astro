@@ -10,23 +10,23 @@ const { id } = Astro.params;
 const { searchParams } = Astro.url;
 
 const user = Astro.locals.user;
-const token = Astro.locals.token;
+const isPublicParam = searchParams.get("view") === "public";
 
 const supabase = createSupabaseSSR(Astro);
-
-const isPublicView = searchParams.get("view") === "public";
 
 const { data: project } = await supabase
 	.from("avatar_config")
 	.select("*")
 	.eq("id", id as string)
 	.maybeSingle();
+
 if (!project) return Astro.redirect("/dashboard?error=not_found");
 
 const isOwner = user?.id === project.user_id;
-
-if (!isPublicView && !isOwner) {
-	return Astro.redirect("/dashboard?error=unauthorized");
+if (!isOwner && !isPublicParam) {
+	const publicUrl = new URL(Astro.url);
+	publicUrl.searchParams.set("view", "public");
+	return Astro.redirect(publicUrl.toString());
 }
 
 const { data: layers } = await supabase
@@ -37,7 +37,7 @@ const { data: layers } = await supabase
 
 const sortedLayers = layers || [];
 
-const canEditLayers = isOwner && !isPublicView;
+const canEditLayers = isOwner && !isPublicParam;
 console.log("canEditLayers", canEditLayers);
 ---
 
@@ -45,10 +45,10 @@ console.log("canEditLayers", canEditLayers);
 	<main
 		id="editor-root"
 		data-project-id={id}
-		class="w-full max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-12 gap-6 lg:gap-8 p-0 sm:p-8 sm:min-h-screen"
+		class="flex flex-col lg:grid lg:grid-cols-12 lg:gap-8 w-full max-w-5xl mx-auto min-h-dvh lg:min-h-screen"
 	>
 		<!-- TODO: Mobile VERSION -->
-		<div
+		<!-- <div
 			class="lg:hidden fixed inset-0 z-150 flex flex-col items-center justify-center p-6 text-center backdrop-blur-xl bg-bg/80"
 		>
 			<span class="text-4xl mb-4 animate-bounce">🚧</span>
@@ -71,41 +71,14 @@ console.log("canEditLayers", canEditLayers);
 			>
 				Coming Soon
 			</div>
-		</div>
-		<!-- Left Side -->
+		</div> -->
+		<!-- Left Side (Desktop) / Top Side (Mobile) -->
 		<div
-			class="lg:col-span-5 sticky top-0 z-40 bg-bg/80 backdrop-blur-md lg:static lg:bg-transparent p-4 lg:p-0"
+			class="lg:col-span-5 sticky lg:static top-0 sm:top-8 z-40 bg-bg/80 backdrop-blur-md lg:bg-transparent"
 		>
-			<!-- Back Button and Title -->
-			<div class="flex w-full lg:hidden items-center gap-4 mb-6">
-				<a
-					href="/dashboard"
-					class="w-11 h-11 flex items-center justify-center rounded-full bg-bg border-2 border-border/40 text-muted hover:text-primary hover:border-primary transition-all"
-				>
-					<svg
-						xmlns="http://www.w3.org/2000/svg"
-						width="20"
-						height="20"
-						viewBox="0 0 24 24"
-						fill="none"
-						stroke="currentColor"
-						stroke-width="3"
-						stroke-linecap="round"
-						stroke-linejoin="round"
-						><path d="m15 18-6-6 6-6"></path></svg
-					>
-				</a>
-
-				<h2
-					class="text-2xl font-black text-heading italic uppercase tracking-tighter"
-				>
-					Capas del Diseño
-				</h2>
-			</div>
-
 			<!-- Canvas -->
 			<div
-				class="relative aspect-square bg-white border-[6px] border-border rounded-[2.5rem] lg:rounded-[3rem] overflow-hidden shadow-xl lg:shadow-[0_20px_50px_rgba(93,64,55,0.1)] transition-all duration-500"
+				class="relative w-full h-[60vh] lg:h-auto lg:aspect-square bg-white border-4 lg:border-[6px] border-border rounded-[2.5rem] lg:rounded-[3rem] overflow-hidden shadow-xl lg:shadow-[0_20px_50px_rgba(93,64,55,0.1)] transition-all duration-500"
 			>
 				<div
 					id="canvas-container"
@@ -120,8 +93,8 @@ console.log("canEditLayers", canEditLayers);
 				</div>
 			</div>
 
-			<!-- Desktop Export Button -->
-			<div class="hidden lg:block cottage-card p-8 mt-6">
+			<!-- Export Button -->
+			<div class="cottage-card p-8 mt-6">
 				<p
 					class="text-[10px] font-black text-primary uppercase tracking-[0.3em] mb-2"
 				>
@@ -132,26 +105,27 @@ console.log("canEditLayers", canEditLayers);
 				>
 					{project.project_name}
 				</h1>
+				<!-- Desktop -->
 				<button
-					id="export-btn-desktop"
+					id="export-btn-trigger"
 					disabled
-					class="cottage-btn-primary w-full py-5"
+					class="cottage-btn-primary w-full py-5 animate-shimmer"
 					>Exportar PNG ✨</button
 				>
 			</div>
 		</div>
 
-		<!-- Right Side -->
+		<!-- Right Side (Desktop) -->
 		<div
-			class="lg:col-span-7 flex flex-col h-screen lg:h-[calc(100vh-4rem)] sticky top-20"
+			class="hidden lg:col-span-7 lg:flex lg:flex-col h-screen lg:h-[calc(100vh-4rem)] sticky top-20"
 		>
 			<header
 				class="flex flex-col lg:flex-row items-center justify-between border-b-4 border-border/20 pb-6 mb-6"
 			>
-				<!-- Back Button and Title -->
+				<!-- Back Button and Title (Desktop) -->
 				<div class="flex w-full lg:w-auto items-center gap-4">
 					{
-						canEditLayers && (
+						(canEditLayers || (user && !isOwner)) && (
 							<a
 								href="/dashboard"
 								class="w-11 h-11 flex items-center justify-center rounded-full bg-bg border-2 border-border/40 text-muted hover:text-primary hover:border-primary transition-all"
@@ -179,7 +153,7 @@ console.log("canEditLayers", canEditLayers);
 					</h2>
 				</div>
 
-				<!-- New Layer Button Desktop -->
+				<!-- New Layer Button (Desktop) -->
 				{
 					canEditLayers && (
 						<button
@@ -191,7 +165,7 @@ console.log("canEditLayers", canEditLayers);
 					)
 				}
 			</header>
-			<!-- Layers List Desktop -->
+			<!-- Layers List (Desktop) -->
 			<div
 				id="layers-list"
 				class="flex-1 overflow-y-auto pr-2 custom-scrollbar space-y-6 pb-32"
@@ -234,13 +208,15 @@ console.log("canEditLayers", canEditLayers);
 			</div>
 		</div>
 
+		<!-- Bottom Side (Mobile) -->
 		<div
 			id="layers-sheet"
-			class="fixed lg:hidden inset-x-0 bottom-0 z-50 bg-white border-t-[6px] border-border rounded-t-[3rem] shadow-[0_-20px_50px_rgba(93,64,55,0.15)] transition-transform duration-500 translate-y-[calc(100%-60px)] lg:relative lg:translate-y-0 lg:border-t-0 lg:shadow-none lg:bg-transparent h-[70vh] lg:h-full flex flex-col"
+			class="fixed lg:hidden inset-x-0 bottom-0 z-50 bg-white border-t-[6px] border-border rounded-t-[3rem] shadow-[0_-20px_50px_rgba(93,64,55,0.15)] transition-transform duration-500 translate-y-[calc(100%)] lg:relative lg:translate-y-0 lg:border-t-0 lg:shadow-none lg:bg-transparent h-[70vh] lg:h-full flex flex-col"
 		>
+			<!-- Close Button if sheet is open -->
 			<div
 				class="flex justify-center p-4 cursor-pointer"
-				id="sheet-handle"
+				id="sheet-handle-close"
 			>
 				<div class="w-12 h-1.5 bg-border/60 rounded-full"></div>
 			</div>
@@ -269,33 +245,44 @@ console.log("canEditLayers", canEditLayers);
 			</div>
 		</div>
 
+		<!-- Sheet Overlay (Mobile) -->
+		<!-- Close Sheet if overlay is clicked when sheet is open else nothing -->
 		<div
 			id="sheet-overlay"
-			class="fixed inset-0 bg-heading/20 backdrop-blur-sm opacity-0 pointer-events-none transition-opacity lg:hidden z-40"
+			class="fixed inset-0 bg-heading/20 backdrop-blur-sm opacity-0 transition-opacity lg:hidden z-40 pointer-events-none"
 		>
 		</div>
 
-		<!-- Mobile Export Button (Floating) -->
+		<!-- Open Sheet (Floating) -->
 		<button
-			id="export-btn-mobile"
-			disabled
-			class="lg:hidden fixed bottom-6 right-6 px-6 py-3
-           bg-primary text-white rounded-full
-           flex items-center justify-center gap-2 text-sm font-black uppercase tracking-widest z-49
-           transition-all duration-300
-           shadow-[0_10px_25px_rgba(255,181,194,0.4)]
-           disabled:opacity-60
-           disabled:bg-bg
-           disabled:text-muted/60
-           disabled:border-2
-           disabled:border-dashed
-           disabled:border-border
-           disabled:shadow-none
-           disabled:grayscale
-           active:scale-95 touch-none"
+			id="sheet-handle"
+			class="lg:hidden fixed bottom-6 right-6 px-8 py-4
+           bg-white border-4 border-border/40 text-heading
+           rounded-full shadow-[0_8px_20px_rgba(93,64,55,0.15)]
+           flex items-center gap-3 transition-all duration-300
+           hover:border-primary/60 hover:scale-105 active:scale-95
+           z-49 group"
 		>
-			<span class="text-lg disabled:opacity-50">✨</span>
-			<span>Exportar</span>
+			<svg
+				xmlns="http://www.w3.org/2000/svg"
+				width="18"
+				height="18"
+				viewBox="0 0 24 24"
+				fill="none"
+				stroke="currentColor"
+				stroke-width="2.5"
+				stroke-linecap="round"
+				stroke-linejoin="round"
+				class="text-primary group-hover:rotate-12 transition-transform"
+			>
+				<path
+					d="m12 3-1.912 5.813a2 2 0 0 1-1.275 1.275L3 12l5.813 1.912a2 2 0 0 1 1.275 1.275L12 21l1.912-5.813a2 2 0 0 1 1.275-1.275L21 12l-5.813-1.912a2 2 0 0 1-1.275-1.275L12 3Z"
+				></path>
+			</svg>
+
+			<span class="text-xs font-black uppercase tracking-[0.2em] italic">
+				Editar
+			</span>
 		</button>
 	</main>
 
@@ -398,10 +385,7 @@ console.log("canEditLayers", canEditLayers);
 		// --- Exportar ---
 		const runExport = () => handleExport(state, UI.projectName);
 		document
-			.getElementById("export-btn-desktop")
-			?.addEventListener("click", runExport);
-		document
-			.getElementById("export-btn-mobile")
+			.getElementById("export-btn-trigger")
 			?.addEventListener("click", runExport);
 
 		// --- Init Capas ---
@@ -469,8 +453,15 @@ console.log("canEditLayers", canEditLayers);
 			);
 		});
 
+		// --- Bottom Sheet ---
 		document
 			.getElementById("sheet-handle")
+			?.addEventListener("click", () => {
+				toggleSheet(UI);
+			});
+
+		document
+			.getElementById("sheet-handle-close")
 			?.addEventListener("click", () => {
 				toggleSheet(UI);
 			});

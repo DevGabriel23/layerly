@@ -3,124 +3,125 @@
 @import "tailwindcss";
 
 @theme {
-  /* Variables de Tema */
-  --color-bg: var(--theme-bg);
-  --color-surface: var(--theme-surface);
-  --color-primary: var(--theme-primary);
-  --color-secondary: var(--theme-secondary);
-  --color-accent: var(--theme-accent);
-  --color-text: var(--theme-text);
-  --color-border: var(--theme-border);
-  --color-heading: var(--theme-heading);
-  --color-muted: var(--theme-muted);
+	/* Variables de Tema */
+	--color-bg: var(--theme-bg);
+	--color-surface: var(--theme-surface);
+	--color-primary: var(--theme-primary);
+	--color-secondary: var(--theme-secondary);
+	--color-accent: var(--theme-accent);
+	--color-text: var(--theme-text);
+	--color-border: var(--theme-border);
+	--color-heading: var(--theme-heading);
+	--color-muted: var(--theme-muted);
 
-  /* Paleta Variada */
-  --color-fairy-blue: #b3e5fc;
-  --color-coquette-tan: #d7ccc8;
-  --color-peach: #ffccbc;
+	/* Paleta Variada */
+	--color-fairy-blue: #b3e5fc;
+	--color-coquette-tan: #d7ccc8;
+	--color-peach: #ffccbc;
 }
 
 /* --- Scrollbar Cottagecore --- */
 .custom-scrollbar {
-  scrollbar-width: thin;
-  scrollbar-color: var(--theme-border) var(--theme-bg);
+	scrollbar-width: thin;
+	scrollbar-color: var(--theme-border) var(--theme-bg);
 }
 
 .custom-scrollbar::-webkit-scrollbar {
-  width: 6px;
+	width: 6px;
 }
 
 .custom-scrollbar::-webkit-scrollbar-track {
-  background: var(--theme-bg);
-  border-radius: 10px;
+	background: var(--theme-bg);
+	border-radius: 10px;
 }
 
 .custom-scrollbar::-webkit-scrollbar-thumb {
-  background: var(--theme-border);
-  border-radius: 20px;
-  border: 2px solid var(--theme-bg);
+	background: var(--theme-border);
+	border-radius: 20px;
+	border: 2px solid var(--theme-bg);
 }
 
 .custom-scrollbar::-webkit-scrollbar-thumb:hover {
-  background: var(--theme-primary);
+	background: var(--theme-primary);
 }
 
 /* --- Componentes --- */
 @layer components {
-  .cottage-label {
-    @apply block text-[10px] font-black text-muted uppercase tracking-[0.2em] ml-4 mb-2;
-  }
+	.cottage-label {
+		@apply block text-[10px] font-black text-muted uppercase tracking-[0.2em] ml-4 mb-2;
+	}
 
-  .cottage-input {
-    @apply w-full bg-bg border-4 border-border/20 rounded-full px-6 py-4 text-heading outline-none 
+	.cottage-input {
+		@apply w-full bg-bg border-4 border-border/20 rounded-full px-6 py-4 text-heading outline-none 
            transition-all placeholder:text-muted/40 shadow-inner italic focus:border-primary focus:bg-white;
-  }
+	}
 
 	.cottage-btn-primary {
 		@apply flex items-center justify-center gap-2 rounded-full bg-primary text-white font-black uppercase transition-all cursor-pointer;
-		
-        @apply text-[10px] tracking-[0.15em] px-8 py-3.5 shadow-[0_8px_20px_rgba(255,181,194,0.4)];
 
-			&:not(:disabled):hover {
-				@apply scale-105 shadow-[0_15px_25px_rgba(255,181,194,0.6)];
-			}
-			
-			&:not(:disabled):active {
-				@apply scale-95;
-			}
+		@apply text-[10px] tracking-[0.15em] px-8 py-3.5 shadow-[0_8px_20px_rgba(255,181,194,0.4)];
 
-			&:disabled {
-				@apply bg-slate-200 text-muted shadow-none cursor-not-allowed grayscale-[0.5] opacity-70;
-			}
+		&:not(:disabled):hover {
+			@apply scale-105 shadow-[0_15px_25px_rgba(255,181,194,0.6)];
+		}
+
+		&:not(:disabled):active {
+			@apply scale-95;
+		}
+
+		&:disabled {
+			@apply bg-slate-200 text-muted shadow-none cursor-not-allowed grayscale-[0.5] opacity-70;
+		}
 	}
 
-  .cottage-btn-secondary {
+	.cottage-btn-secondary {
 		@apply w-full flex items-center justify-center opacity-60 hover:opacity-100;
 	}
 
-  .cottage-card {
-    @apply bg-white border-4 border-border/40 rounded-[2.5rem] shadow-[0_10px_30px_rgba(93,64,55,0.05)] 
+	.cottage-card {
+		@apply bg-white border-4 border-border/40 rounded-[2.5rem] shadow-[0_10px_30px_rgba(93,64,55,0.05)] 
            transition-all duration-300;
-    transition-timing-function: cubic-bezier(0.175, 0.885, 0.32, 1.275);
-  }
-
-  .cottage-card:hover {
-    @apply -translate-y-1.5 rotate-1;
-  }
-
-  /* --- Modales --- */
-  .modal-overlay {
-    @apply fixed inset-0 z-100 flex items-center justify-center p-4 opacity-0 pointer-events-none transition-all duration-300;
-    background-color: rgba(78, 52, 46, 0.3);
-  }
-
-  .modal-overlay.is-active {
-    @apply opacity-100 pointer-events-auto;
-  }
-
-  .modal-content {
-    @apply w-[92%] max-w-lg bg-surface border-[6px] border-border/50 rounded-[2.5rem] p-8 relative 
-           shadow-2xl transition-all duration-500 scale-90 opacity-0 translate-y-10;
-    max-height: 90vh;
-    overflow-y: auto;
-    scrollbar-width: none;
-    -ms-overflow-style: none;
-  }
-
-  .modal-content::-webkit-scrollbar {
-    display: none;
-  }
-
-  .modal-overlay.is-active .modal-content {
-    @apply scale-100 opacity-100 translate-y-0;
-    transition-timing-function: cubic-bezier(0.34, 1.56, 0.64, 1);
-  }
-
-  .modal-open #main-wrapper {
-	  @apply blur-xs transition-all duration-300;
+		transition-timing-function: cubic-bezier(0.175, 0.885, 0.32, 1.275);
 	}
-	
-	
+
+	@media (min-width: 1024px) {
+		.cottage-card:hover {
+			@apply -translate-y-1.5 rotate-1;
+		}
+	}
+
+	/* --- Modales --- */
+	.modal-overlay {
+		@apply fixed inset-0 z-100 flex items-center justify-center p-4 opacity-0 pointer-events-none transition-all duration-300;
+		background-color: rgba(78, 52, 46, 0.3);
+	}
+
+	.modal-overlay.is-active {
+		@apply opacity-100 pointer-events-auto;
+	}
+
+	.modal-content {
+		@apply w-[92%] max-w-lg bg-surface border-[6px] border-border/50 rounded-[2.5rem] p-8 relative 
+           shadow-2xl transition-all duration-500 scale-90 opacity-0 translate-y-10;
+		max-height: 90vh;
+		overflow-y: auto;
+		scrollbar-width: none;
+		-ms-overflow-style: none;
+	}
+
+	.modal-content::-webkit-scrollbar {
+		display: none;
+	}
+
+	.modal-overlay.is-active .modal-content {
+		@apply scale-100 opacity-100 translate-y-0;
+		transition-timing-function: cubic-bezier(0.34, 1.56, 0.64, 1);
+	}
+
+	.modal-open #main-wrapper {
+		@apply blur-xs transition-all duration-300;
+	}
+
 	.modal-content {
 		@apply flex flex-col;
 	}
@@ -128,4 +129,34 @@
 .modal-content button.close-x-btn {
 	@apply bg-bg w-10 h-10 rounded-full flex items-center justify-center border-2 border-border/50 
 	hover:bg-primary hover:text-white transition-all absolute top-6 right-6 z-50 cursor-pointer;
+}
+
+@keyframes shimmer {
+	0% {
+		transform: translateX(-100%);
+	}
+	100% {
+		transform: translateX(100%);
+	}
+}
+
+.animate-shimmer {
+	position: relative;
+	overflow: hidden;
+}
+
+.animate-shimmer::after {
+	content: "";
+	position: absolute;
+	top: 0;
+	left: 0;
+	width: 100%;
+	height: 100%;
+	background: linear-gradient(
+		90deg,
+		transparent,
+		rgba(255, 255, 255, 0.4),
+		transparent
+	);
+	animation: shimmer 3s infinite;
 }
