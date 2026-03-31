@@ -75,10 +75,11 @@ export async function handleExport(state: EditorState, projectName: string) {
 				} else {
 					ctx.drawImage(img, 0, 0, maxW, maxH);
 				}
-			} else if (data.supportHex && data.color) {
+			}
+			/* else if (data.supportHex && data.color) {
 				ctx.fillStyle = data.color;
 				ctx.fillRect(0, 0, maxW, maxH);
-			}
+			} */
 		}
 
 		// 4. Descargar
