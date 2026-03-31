@@ -24,7 +24,12 @@ export const onRequest = defineMiddleware(async (context, next) => {
 	if (isEditor) {
 		if (!isPublicParam) {
 			const publicUrl = new URL(context.url);
-			publicUrl.searchParams.set("view", "public");
+
+			if (!user) {
+				publicUrl.searchParams.set("view", "public");
+			} else {
+				return context.redirect("/dashboard?error=unauthorized");
+			}
 
 			return context.redirect(publicUrl.toString());
 		}
