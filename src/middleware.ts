@@ -21,7 +21,7 @@ export const onRequest = defineMiddleware(async (context, next) => {
 
 	const isPublicParam = searchParams.get("view") === "public";
 
-	if (isEditor && !user) {
+	if (isEditor) {
 		if (!isPublicParam) {
 			const publicUrl = new URL(context.url);
 			publicUrl.searchParams.set("view", "public");
