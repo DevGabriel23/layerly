@@ -143,8 +143,9 @@ export async function createLayer(
 
 export function toggleSheet(elements: EditorElements) {
 	const { sheet, overlay } = elements;
+
 	const isClosed = sheet?.classList.contains("translate-y-[calc(100%)]");
-	console.log("isClosed", isClosed);
+
 	if (isClosed) {
 		sheet?.classList.remove("translate-y-[calc(100%)]");
 		overlay?.classList.add("opacity-100", "pointer-events-auto");

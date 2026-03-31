@@ -156,10 +156,7 @@ console.log("canEditLayers", canEditLayers);
 				<!-- New Layer Button (Desktop) -->
 				{
 					canEditLayers && (
-						<button
-							id="open-modal-btn"
-							class="cottage-btn-primary text-sm! hidden lg:block"
-						>
+						<button class="open-modal-btn cottage-btn-primary text-sm! hidden lg:block">
 							+ Nueva Capa
 						</button>
 					)
@@ -229,19 +226,25 @@ console.log("canEditLayers", canEditLayers);
 				>
 					Capas
 				</h2>
-				<button
-					id="open-modal-btn"
-					class="cottage-btn-primary py-2! px-4! text-[9px]!"
-				>
-					+ Nueva
-				</button>
+
+				{
+					canEditLayers && (
+						<button class="open-modal-btn cottage-btn-primary text-xs! py-2! px-4!">
+							+ Nueva
+						</button>
+					)
+				}
 			</header>
 
 			<div
 				id="layers-list"
 				class="flex-1 overflow-y-auto px-4 custom-scrollbar pb-20"
 			>
-				{sortedLayers.map((layer) => <LayerCard layer={layer} />)}
+				{
+					sortedLayers.map((layer) => (
+						<LayerCard layer={layer} readonly={!canEditLayers} />
+					))
+				}
 			</div>
 		</div>
 
@@ -473,12 +476,19 @@ console.log("canEditLayers", canEditLayers);
 			});
 
 		// --- Nueva Capa: Apertura ---
-		document
-			.getElementById("open-modal-btn")
-			?.addEventListener("click", () => {
+		document.querySelectorAll(".open-modal-btn")?.forEach((btn) =>
+			btn.addEventListener("click", () => {
+				if (window.innerWidth < 1024) {
+					const isClosed = UI.sheet?.classList.contains(
+						"translate-y-[calc(100%)]",
+					);
+					if (!isClosed) toggleSheet(UI);
+				}
+
 				resetNewLayerModal(UI);
 				window.openModal("new-layer-modal");
-			});
+			}),
+		);
 
 		// --- Nueva Capa: Confirmación ---
 		document
