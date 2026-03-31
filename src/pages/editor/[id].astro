@@ -497,6 +497,7 @@ console.log("canEditLayers", canEditLayers);
 			});
 
 		// --- Borrados ---
+		// ------ Capa ---
 		document
 			.querySelectorAll(".delete-layer-btn")
 			.forEach((btn) =>
@@ -504,7 +505,7 @@ console.log("canEditLayers", canEditLayers);
 					deleteLayer(btn as HTMLButtonElement),
 				),
 			);
-
+		// ------ Variante ---
 		document.querySelectorAll(".delete-variant-btn").forEach((btn) =>
 			btn.addEventListener("click", (e) => {
 				e.stopPropagation();
