@@ -1,48 +1,63 @@
 // src/pages/api/delete-variant.ts
+
 import type { APIRoute } from "astro";
 import { deleteFromCloudinary } from "../../utils/cloudinary";
-import { supabase } from "../../lib/supabase";
+import { createSupabaseSSR } from "../../lib/supabase";
 
-export const POST: APIRoute = async ({ request, cookies }) => {
-	// 1. Intentar obtener el usuario directamente de las cookies si locals falló
-	const accessToken = cookies.get("sb-access-token")?.value;
-	const refreshToken = cookies.get("sb-refresh-token")?.value;
+export const POST: APIRoute = async (context) => {
+	const supabase = createSupabaseSSR(context);
 
-	if (!accessToken || !refreshToken) {
-		return new Response("No autorizado: Faltan tokens", { status: 401 });
-	}
-
-	// Validar con Supabase manualmente en el servidor
 	const {
 		data: { user },
 		error: authError,
-	} = await supabase.auth.setSession({
-		access_token: accessToken,
-		refresh_token: refreshToken,
-	});
+	} = await supabase.auth.getUser();
 
 	if (authError || !user) {
-		return new Response("Sesión inválida", { status: 401 });
+		return new Response(
+			JSON.stringify({ error: "Sesión inválida o expirada" }),
+			{
+				status: 401,
+			},
+		);
 	}
-	try {
-		const { variantId } = await request.json();
 
-		// 1. Obtener las URLs antes de borrar el registro
+	try {
+		const { variantId } = await context.request.json();
+
 		const { data: variant, error: fetchError } = await supabase
 			.from("variants")
 			.select("public_id_master, public_id_proxy")
 			.eq("id", variantId)
-			.single();
+			.maybeSingle();
 
-		if (fetchError || !variant) throw new Error("Variante no encontrada");
+		if (fetchError || !variant) {
+			return new Response(
+				JSON.stringify({ error: "Variante no encontrada" }),
+				{
+					status: 404,
+				},
+			);
+		}
 
-		// 2. Borrar en Cloudinary (en paralelo)
-		await Promise.all([
-			deleteFromCloudinary(variant.public_id_master!),
-			deleteFromCloudinary(variant.public_id_proxy!),
-		]);
+		try {
+			const cloudinaryTasks = [];
+			if (variant.public_id_master)
+				cloudinaryTasks.push(
+					deleteFromCloudinary(variant.public_id_master),
+				);
+			if (variant.public_id_proxy)
+				cloudinaryTasks.push(
+					deleteFromCloudinary(variant.public_id_proxy),
+				);
 
-		// 3. Borrar en Supabase
+			await Promise.all(cloudinaryTasks);
+		} catch (cloudinaryErr) {
+			console.error(
+				"Error al limpiar archivos en Cloudinary:",
+				cloudinaryErr,
+			);
+		}
+
 		const { error: dbError } = await supabase
 			.from("variants")
 			.delete()
@@ -50,10 +65,17 @@ export const POST: APIRoute = async ({ request, cookies }) => {
 
 		if (dbError) throw dbError;
 
-		return new Response(JSON.stringify({ success: true }), { status: 200 });
-	} catch (e: any) {
-		return new Response(JSON.stringify({ error: e.message }), {
-			status: 500,
+		return new Response(JSON.stringify({ success: true }), {
+			status: 200,
+			headers: { "Content-Type": "application/json" },
 		});
+	} catch (e: any) {
+		console.error("[API DELETE VARIANT ERROR]:", e.message);
+		return new Response(
+			JSON.stringify({ error: "No se pudo eliminar la variante" }),
+			{
+				status: 500,
+			},
+		);
 	}
 };

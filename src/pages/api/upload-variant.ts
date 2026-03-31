@@ -2,80 +2,81 @@
 
 import type { APIRoute } from "astro";
 import { uploadFileToCloudinary } from "../../utils/cloudinary";
-import { supabase } from "../../lib/supabase";
+import { createSupabaseSSR } from "../../lib/supabase";
 
-export const POST: APIRoute = async ({ request, cookies }) => {
-	// 1. Intentar obtener el usuario directamente de las cookies si locals falló
-	const accessToken = cookies.get("sb-access-token")?.value;
-	const refreshToken = cookies.get("sb-refresh-token")?.value;
+export const POST: APIRoute = async (context) => {
+	const supabase = createSupabaseSSR(context);
 
-	if (!accessToken || !refreshToken) {
-		return new Response("No autorizado: Faltan tokens", { status: 401 });
-	}
-
-	// Validar con Supabase manualmente en el servidor
 	const {
 		data: { user },
 		error: authError,
-	} = await supabase.auth.setSession({
-		access_token: accessToken,
-		refresh_token: refreshToken,
-	});
+	} = await supabase.auth.getUser();
 
 	if (authError || !user) {
-		return new Response("Sesión inválida", { status: 401 });
+		return new Response(JSON.stringify({ error: "Sesión inválida" }), {
+			status: 401,
+		});
 	}
 
-	// Ahora 'user' ya no es undefined
-	console.log("Subida iniciada por:", user.email);
-
 	try {
-		const formData = await request.formData();
+		const formData = await context.request.formData();
 		const fileMaster = formData.get("file_master") as File;
 		const fileProxy = formData.get("file_proxy") as File;
 		const layerId = formData.get("layerId") as string;
 
 		if (!fileMaster || !fileProxy || !layerId) {
-			return new Response("Faltan archivos en el formulario", {
-				status: 400,
-			});
+			return new Response(
+				JSON.stringify({
+					error: "Faltan archivos o datos en el formulario",
+				}),
+				{
+					status: 400,
+				},
+			);
 		}
 
 		const { data: layerData, error: layerError } = await supabase
 			.from("layers")
 			.select("project_id")
 			.eq("id", layerId)
-			.single();
+			.maybeSingle();
 
-		if (layerError || !layerData)
-			throw new Error("No se pudo encontrar el proyecto de la capa");
+		if (layerError || !layerData) {
+			return new Response(
+				JSON.stringify({ error: "Capa no encontrada" }),
+				{ status: 404 },
+			);
+		}
 
 		const projectId = layerData.project_id;
-
 		const pathBase = `users/${user.id}/projects/${projectId}/layers/${layerId}`;
-		const masterFolder = `${pathBase}/masters`;
-		const proxyFolder = `${pathBase}/proxies`;
 
-		// 4. Subida Dual
 		const [resMaster, resProxy] = await Promise.all([
-			uploadFileToCloudinary(fileMaster, masterFolder),
-			uploadFileToCloudinary(fileProxy, proxyFolder),
+			uploadFileToCloudinary(fileMaster, `${pathBase}/masters`),
+			uploadFileToCloudinary(fileProxy, `${pathBase}/proxies`),
 		]);
 
 		const { error: dbError } = await supabase.from("variants").insert({
 			layer_id: layerId,
-			url_master: resMaster.secure_url, // El PNG original pesado
-			url_proxy: resProxy.secure_url, // El WebP optimizado
+			url_master: resMaster.secure_url,
+			url_proxy: resProxy.secure_url,
 			public_id_master: resMaster.public_id,
 			public_id_proxy: resProxy.public_id,
 		});
 
 		if (dbError) throw dbError;
 
-		return new Response(JSON.stringify({ success: true }), { status: 200 });
-	} catch (e: any) {
-		return new Response(JSON.stringify({ error: e.message }), {
-			status: 500,
+		return new Response(JSON.stringify({ success: true }), {
+			status: 200,
+			headers: { "Content-Type": "application/json" },
 		});
+	} catch (e: any) {
+		console.error("[API UPLOAD VARIANT ERROR]:", e.message);
+		return new Response(
+			JSON.stringify({ error: "No se pudo procesar la imagen" }),
+			{
+				status: 500,
+			},
+		);
 	}
 };

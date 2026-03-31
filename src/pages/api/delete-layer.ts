@@ -1,27 +1,25 @@
+// src/pages/api/delete-layer.ts
+
 import type { APIRoute } from "astro";
 import { deleteFolderFromCloudinary } from "../../utils/cloudinary";
-import { supabase } from "../../lib/supabase";
+import { createSupabaseSSR } from "../../lib/supabase";
 
-export const POST: APIRoute = async ({ request, cookies }) => {
-	const accessToken = cookies.get("sb-access-token")?.value;
-	const refreshToken = cookies.get("sb-refresh-token")?.value;
-
-	if (!accessToken || !refreshToken)
-		return new Response("No autorizado", { status: 401 });
+export const POST: APIRoute = async (context) => {
+	const supabase = createSupabaseSSR(context);
 
 	const {
 		data: { user },
 		error: authError,
-	} = await supabase.auth.setSession({
-		access_token: accessToken,
-		refresh_token: refreshToken,
-	});
+	} = await supabase.auth.getUser();
 
-	if (authError || !user)
-		return new Response("Sesión inválida", { status: 401 });
+	if (authError || !user) {
+		return new Response(JSON.stringify({ error: "No autorizado" }), {
+			status: 401,
+		});
+	}
 
 	try {
-		const { layerId } = await request.json();
+		const { layerId } = await context.request.json();
 
 		const { data: layer, error: fetchError } = await supabase
 			.from("layers")
@@ -29,7 +27,12 @@ export const POST: APIRoute = async ({ request, cookies }) => {
 			.eq("id", layerId)
 			.single();
 
-		if (fetchError || !layer) throw new Error("Capa no encontrada");
+		if (fetchError || !layer) {
+			return new Response(
+				JSON.stringify({ error: "Capa no encontrada" }),
+				{ status: 404 },
+			);
+		}
 
 		const folderPath = `users/${user.id}/projects/${layer.project_id}/layers/${layerId}`;
 
@@ -46,10 +49,17 @@ export const POST: APIRoute = async ({ request, cookies }) => {
 
 		if (dbError) throw dbError;
 
-		return new Response(JSON.stringify({ success: true }), { status: 200 });
-	} catch (e: any) {
-		return new Response(JSON.stringify({ error: e.message }), {
-			status: 500,
+		return new Response(JSON.stringify({ success: true }), {
+			status: 200,
+			headers: { "Content-Type": "application/json" },
 		});
+	} catch (e: any) {
+		console.error("[API DELETE LAYER ERROR]:", e.message);
+		return new Response(
+			JSON.stringify({ error: "Error interno del servidor" }),
+			{
+				status: 500,
+			},
+		);
 	}
 };

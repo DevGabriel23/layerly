@@ -1,49 +1,63 @@
+// src/pages/api/delete-project.ts
+
 import type { APIRoute } from "astro";
 import { deleteFolderFromCloudinary } from "../../utils/cloudinary";
-import { supabase } from "../../lib/supabase";
+import { createSupabaseSSR } from "../../lib/supabase";
 
-export const POST: APIRoute = async ({ request, cookies }) => {
-	const accessToken = cookies.get("sb-access-token")?.value;
-	const refreshToken = cookies.get("sb-refresh-token")?.value;
-
-	if (!accessToken || !refreshToken)
-		return new Response("No autorizado", { status: 401 });
+export const POST: APIRoute = async (context) => {
+	const supabase = createSupabaseSSR(context);
 
 	const {
 		data: { user },
 		error: authError,
-	} = await supabase.auth.setSession({
-		access_token: accessToken,
-		refresh_token: refreshToken,
-	});
+	} = await supabase.auth.getUser();
 
-	if (authError || !user)
-		return new Response("Sesión inválida", { status: 401 });
+	if (authError || !user) {
+		return new Response(JSON.stringify({ error: "No autorizado" }), {
+			status: 401,
+		});
+	}
 
 	try {
-		const { projectId } = await request.json();
+		const { projectId } = await context.request.json();
 
-		// 1. Ruta raíz del proyecto en Cloudinary
+		if (!projectId) {
+			return new Response(
+				JSON.stringify({ error: "Falta el ID del proyecto" }),
+				{ status: 400 },
+			);
+		}
+
 		const folderPath = `users/${user.id}/projects/${projectId}`;
 
-		// 2. Limpieza profunda en la nube
-		await deleteFolderFromCloudinary(folderPath).catch((err) => {
-			console.error("Error no crítico en Cloudinary:", err);
-		});
+		try {
+			await deleteFolderFromCloudinary(folderPath);
+		} catch (cloudinaryErr) {
+			console.error(
+				"Fallo al limpiar carpeta en Cloudinary:",
+				cloudinaryErr,
+			);
+		}
 
-		// 3. Borrado en Supabase (Las capas y variantes se borran por CASCADE)
 		const { error: dbError } = await supabase
 			.from("avatar_config")
 			.delete()
 			.eq("id", projectId)
-			.eq("user_id", user.id); // Seguridad extra
+			.eq("user_id", user.id);
 
 		if (dbError) throw dbError;
 
-		return new Response(JSON.stringify({ success: true }), { status: 200 });
-	} catch (e: any) {
-		return new Response(JSON.stringify({ error: e.message }), {
-			status: 500,
+		return new Response(JSON.stringify({ success: true }), {
+			status: 200,
+			headers: { "Content-Type": "application/json" },
 		});
+	} catch (e: any) {
+		console.error("[API DELETE PROJECT ERROR]:", e.message);
+		return new Response(
+			JSON.stringify({ error: "Error interno al eliminar el proyecto" }),
+			{
+				status: 500,
+			},
+		);
 	}
 };
